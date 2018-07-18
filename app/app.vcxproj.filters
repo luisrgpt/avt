@@ -13,10 +13,16 @@
     <None Include="share\cube.ply">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="share\fragment.glsl">
+    <None Include="share\position_fragment.glsl">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="share\vertex.glsl">
+    <None Include="share\position_vertex.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="share\normal_fragment.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="share\normal_vertex.glsl">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

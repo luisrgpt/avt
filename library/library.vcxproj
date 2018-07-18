@@ -81,7 +81,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>EnableAllWarnings</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
@@ -89,6 +89,16 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link />
+    <Lib />
+    <Lib>
+      <AdditionalDependencies>assimp-vc140-mt.lib;freeglut.lib;glew32.lib;glew32s.lib</AdditionalDependencies>
+    </Lib>
+    <Lib>
+      <ForceSymbolReferences>true</ForceSymbolReferences>
+    </Lib>
+    <Lib>
+      <Verbose>true</Verbose>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -119,12 +129,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="include\gl\core.hpp" />
-    <ClInclude Include="include\gl\extra.hpp" />
+    <ClInclude Include="include\gl\graphics.hpp" />
+    <ClInclude Include="include\gl\physics.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\core.cpp" />
-    <ClCompile Include="src\extra.cpp" />
+    <ClCompile Include="src\graphics.cpp" />
+    <ClCompile Include="src\physics.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

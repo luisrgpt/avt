@@ -1,5 +1,6 @@
 #pragma once
 
+#include <boost/container/vector.hpp>
 #include <cstdlib>
 #include <cmath>
 #include <fstream>
@@ -27,6 +28,7 @@ namespace gl {
     dynamic
   };
   enum behaviour {
+    linear,
     seek
   };
 
@@ -54,6 +56,18 @@ namespace gl {
     object& operator+=(movement<dynamic, type>);
   };
 
+  template<> class movement<kinematic, linear> {
+  public:
+    glm::vec3 linear;
+    glm::quat angular;
+    float duration;
+    float max_speed;
+
+    movement(glm::vec3, float);
+
+    template<behaviour type>
+    friend object& object::operator+=(movement<kinematic, type>);
+  };
   template<> class movement<kinematic, seek> {
   public:
     glm::vec3 linear;

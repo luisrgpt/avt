@@ -81,9 +81,9 @@
     </ClCompile>
     <Link />
     <Link />
-    <Link>
-      <AdditionalDependencies>assimp-vc140-mt.lib;freeglut.lib;glew32.lib;glew32s.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
+    <Link />
+    <Link />
+    <Link />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -128,8 +128,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="share\cube.ply" />
-    <None Include="share\fragment.glsl" />
-    <None Include="share\vertex.glsl" />
+    <None Include="share\normal_fragment.glsl" />
+    <None Include="share\normal_vertex.glsl" />
+    <None Include="share\position_fragment.glsl" />
+    <None Include="share\position_vertex.glsl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp" />

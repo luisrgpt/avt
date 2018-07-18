@@ -1,7 +1,14 @@
-#include <gl/extra.hpp>
+#include <gl/physics.hpp>
 
 using namespace gl;
 
+movement<kinematic, linear>::movement(
+  glm::vec3 linear,
+  float duration)
+  : linear(linear)
+  , angular(glm::quat())
+  , duration(duration)
+  , max_speed(10000) {}
 movement<kinematic, seek>::movement(
   object target,
   float duration,
@@ -56,7 +63,10 @@ object& object::operator+=(movement<kinematic, type> movement) {
     // Convert vector to orientation
     this->orientation = std::atan2(movement.linear.x, movement.linear.z);
   }
+
+  return (*this);
 }
+template object& object::operator+=(movement<kinematic, linear>);
 template<behaviour type>
 object& object::operator+=(movement<dynamic, type> movement) {
   // Integrate with velocity
@@ -79,4 +89,6 @@ object& object::operator+=(movement<dynamic, type> movement) {
     this->velocity = glm::normalize(this->velocity);
     this->velocity *= movement.max_speed;
   }
+
+  return (*this);
 }

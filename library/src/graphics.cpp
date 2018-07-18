@@ -1,27 +1,34 @@
-#include <gl/core.hpp>
+#include <gl/graphics.hpp>
 
 #include <assimp/Importer.hpp>
 #include <assimp/mesh.h>
 #include <assimp/scene.h>
 #include <GL/glew.h>
 #include <GL/freeglut.h>
+#include <iostream>
 
 using namespace gl;
 
-window::window()
-  : id(glutCreateWindow("avt"))
-  , width(640)
-  , height(480) {}
-program::program()
-  : id(glCreateProgram())
-  , shader_ids(std::vector<unsigned>()) {}
-engine::engine()
-  : window_ids(std::vector<bool>())
-  , program_ids(std::vector<bool>())
-  , model_ids(std::vector<bool>())
-  , id_counter(0) {
+window::window(int *argc, char **argv, std::string title, unsigned width, unsigned height)
+  : width(width)
+  , height(height) {
+  // Setup GLUT
+  glutInit(argc, argv);
+  glutInitContextVersion(4, 5);
+  glutInitContextFlags(GLUT_FORWARD_COMPATIBLE);
+  glutInitContextProfile(GLUT_CORE_PROFILE);
+  glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
+  glutInitWindowSize(width, height);
+  glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+
+  this->id = glutCreateWindow(title.c_str());
+
+  // Setup GLEW
+  // TODO: check why glew must initialize after creating a window
+  glewExperimental = GL_TRUE;
+  GLenum result = glewInit();
+
   // Setup OpenGL
-  //std::cerr << "CONTEXT: OpenGL v" << glGetString(GL_VERSION) << std::endl;
   glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
   glEnable(GL_DEPTH_TEST);
   glDepthFunc(GL_LEQUAL);
@@ -31,27 +38,20 @@ engine::engine()
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
   glFrontFace(GL_CCW);
-
-  // Setup GLEW
-  glewExperimental = GL_TRUE;
-  GLenum result = glewInit();
-  if (result != GLEW_OK) {
-    //std::cerr << "ERROR glewInit: " << glewGetString(result) << std::endl;
-    exit(EXIT_FAILURE);
-  }
-  GLenum err_code = glGetError();
-
-  // Setup GLUT
-  glutInit(0, NULL);
-
-  glutInitContextVersion(3, 3);
-  glutInitContextFlags(GLUT_FORWARD_COMPATIBLE);
-  glutInitContextProfile(GLUT_CORE_PROFILE);
-
-  glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
-
-  glutInitWindowSize(640, 480);
-  glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+  glEnable(GL_DEBUG_OUTPUT);
+}
+program::program()
+  : id(glCreateProgram())
+  , shader_ids(std::vector<unsigned>()) {}
+engine::engine()
+  : window_ids(boost::container::vector<bool>())
+  , program_ids(boost::container::vector<bool>())
+  , model_ids(boost::container::vector<bool>())
+  , id_counter(0) {
+  this->window_ids.push_back(false);
+  this->program_ids.push_back(false);
+  this->model_ids.push_back(false);
+  this->model_sizes.push_back(0);
 }
 model::model(
   std::string filename,
@@ -64,51 +64,39 @@ model::model(
   , object(position, orientation, velocity, rotation)
   , scale(glm::scale(scale))
   , buffer_ids(std::vector<unsigned>())
-  , id_counter(0) {
+  , id_counter(0u)
+  , matrix(glm::translate(position) * (glm::mat4_cast(orientation) * this->scale)) {
   glGenVertexArrays(1, &this->id);
 }
-model::model(std::string filename, glm::vec3 size, glm::vec3 position, glm::quat orientation, glm::vec3 velocity)
-  : model(filename, size, position, orientation, velocity, glm::quat(0, 0, 0, 0)) {}
-model::model(std::string filename, glm::vec3 size, glm::vec3 position, glm::quat orientation)
-  : model(filename, size, position, orientation, glm::vec3(0, 0, 0)) {}
-model::model(std::string filename, glm::vec3 size, glm::vec3 position)
-  : model(filename, size, position, glm::quat(0, 0, 0, 0)) {}
-model::model(std::string filename, glm::vec3 size)
-  : model(filename, size, glm::vec3(0, 0, 0)) {}
-model::model(std::string filename)
-  : model(filename, glm::vec3(1, 1, 1)) {}
 view::view(
   glm::vec3 position,
   glm::quat orientation,
   glm::vec3 velocity,
   glm::quat rotation)
-  : object(position, orientation, velocity, rotation) {}
-view::view(glm::vec3 position, glm::quat orientation, glm::vec3 velocity)
-  : view(position, orientation, velocity, glm::quat(0, 0, 0, 0)) {}
-view::view(glm::vec3 position, glm::quat orientation)
-  : view(position, orientation, glm::vec3(0, 0, 0)) {}
-view::view(glm::vec3 position)
-  : view(position, glm::quat(0, 0, 0, 0)) {}
-view::view()
-  : view(glm::vec3(0, 0, 0)) {}
+  : object(position, orientation, velocity, rotation)
+  , matrix(glm::lookAt(position, orientation * glm::vec3(0.0f, 0.0f, 1.0f), orientation * glm::vec3(0.0f, 1.0f, 0.0f))) {}
 projection::projection(
-  float fov,
-  float aspect,
-  float z_near,
-  float z_far)
-  : fov(fov)
-  , aspect(aspect)
-  , z_near(z_near)
-  , z_far(z_far)
-  , matrix(glm::perspective(fov , aspect, z_near, z_far)) {}
-projection::projection(
+  projection_type type,
   float left,
   float right,
   float bottom,
   float top,
   float z_near,
   float z_far)
-  : projection(90.0f , (right - left)/(top - bottom), z_near, z_far) {}
+  : type(type)
+  , left(left)
+  , right(right)
+  , bottom(bottom)
+  , top(top)
+  , z_near(z_near)
+  , z_far(z_far) {
+    if (type == perspective) {
+      this->matrix = glm::frustum(left, right, bottom, top, z_near, z_far);
+    }
+    else {
+      this->matrix = glm::ortho(left, right, bottom, top, z_near, z_far);
+    }
+  }
 
 window& window::operator+=(callback::close callback) {
   glutCloseFunc(callback.handler);
@@ -162,13 +150,29 @@ model& model::operator+=(movement<m, b> movement) {
 template<mechanic m, behaviour b>
 view& view::operator+=(movement<m, b> movement) {
   this->object += movement;
-  this->matrix = glm::rotate(this->scale, glm::angle(this->object.orientation), glm::axis(this->object.orientation));
-  this->matrix = glm::translate(this->matrix, this->object.position);
   return (*this);
 }
+template view& view::operator+=(movement<kinematic, linear>);
 projection& projection::operator+=(window window) {
-  this->aspect = (float)window.width / (float)window.height;
-  this->matrix = glm::perspective(this->fov, this->aspect, this->z_near, this->z_far);
+  glViewport(0, 0, window.width, window.height);
+
+  float width = window.width / 2.0f;
+  float height = window.height / 2.0f;
+  if (type == perspective) {
+    this->matrix = glm::frustum(
+      -width, width,
+      -height, height,
+      10.0f, 1000.0f
+    );
+  }
+  else {
+    this->matrix = glm::ortho(
+      -width, width,
+      -height, height,
+      10.0f, 1000.0f
+    );
+  }
+
   return (*this);
 }
 
@@ -290,127 +294,108 @@ template program& program::operator+=(shader<fragment>);
 //}
 
 engine& engine::operator+=(window window) {
-  if (this->window_ids[window.id]) {
+  if (this->window_ids.size() > window.id && this->window_ids[window.id]) {
     glutPostRedisplay();
   } else {
+    this->window_ids.insert(this->window_ids.begin() + window.id, true);
     glutMainLoop();
-    this->window_ids.push_back(true);
   }
   return (*this);
 }
 engine& engine::operator+=(program program) {
-  if (this->program_ids[program.id]) {
+  if (this->program_ids.size() > program.id && this->program_ids[program.id]) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(program.id);
   } else {
     glLinkProgram(program.id);
+    glValidateProgram(program.id);
     for (auto shader_id : program.shader_ids) {
       glDetachShader(program.id, shader_id);
     }
-    this->program_ids.push_back(true);
+    this->program_ids.insert(this->program_ids.begin() + program.id, true);
   }
   return (*this);
 }
 engine& engine::operator+=(model model) {
-  if (this->model_ids[model.id]) {
+  if (this->model_ids.size() > model.id && this->model_ids[model.id]) {
     glBindVertexArray(model.id);
-    this->id_counter = model.id_counter;
+    this->id_counter = model.id;
   } else {
     Assimp::Importer importer;
     auto *scene = importer.ReadFile(model.filename, NULL);
-
     //for (auto i = 0u; i < scene->mNumMeshes; ++i) {
     auto *mesh = scene->mMeshes[0];
 
+    // create array with faces
+    // have to convert from Assimp format to array
+    unsigned buffer;
+    unsigned int *faceArray;
+    faceArray = (unsigned int *)malloc(sizeof(unsigned int) * mesh->mNumFaces * 3);
+    unsigned int faceIndex = 0;
+
+    for (unsigned int t = 0; t < mesh->mNumFaces; ++t) {
+      const aiFace* face = &mesh->mFaces[t];
+
+      memcpy(&faceArray[faceIndex], face->mIndices, 3 * sizeof(unsigned int));
+      faceIndex += 3;
+    }
+
+    // generate Vertex Array for mesh
     glBindVertexArray(model.id);
 
-    unsigned array_buffer_id;
-    glGenBuffers(1, &array_buffer_id);
-    model.buffer_ids.push_back(array_buffer_id);
+    // buffer for faces
+    glGenBuffers(1, &buffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * mesh->mNumFaces * 3, faceArray, GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ARRAY_BUFFER, array_buffer_id);
-    glBufferData(GL_ARRAY_BUFFER, mesh->mNumVertices * 9 * sizeof(float), nullptr, GL_STATIC_DRAW);
-
-    unsigned offset_counter;
-    int size;
-    unsigned buffer_size;
-
-    // Insert vertex position data
-    offset_counter = 0;
-    size = 3;
-    buffer_size = mesh->mNumVertices * size;
-    auto *position_buffer = new float[buffer_size];
-    for (auto i = 0u; i < mesh->mNumVertices; ++i) {
-      position_buffer[i * size] = mesh->mVertices[i].x;
-      position_buffer[i * size + 1] = mesh->mVertices[i].y;
-      position_buffer[i * size + 2] = mesh->mVertices[i].z;
+    // buffer for vertex positions
+    if (mesh->HasPositions()) {
+      glGenBuffers(1, &buffer);
+      glBindBuffer(GL_ARRAY_BUFFER, buffer);
+      glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * mesh->mNumVertices, mesh->mVertices, GL_STATIC_DRAW);
+      glEnableVertexAttribArray(0);
+      glVertexAttribPointer(0, 3, GL_FLOAT, 0, 0, 0);
     }
-    glBufferSubData(GL_ARRAY_BUFFER, offset_counter, buffer_size, position_buffer);
-    glEnableVertexAttribArray(this->id_counter);
-    glVertexAttribPointer(this->id_counter, size, GL_FLOAT, GL_FALSE, 0, (void*)offset_counter);
-    delete[] position_buffer;
-    this->id_counter += 1;
 
-    // Insert vertex texture data
-    //  offset_counter += buffer_size;
-    //  size = 2;
-    //  buffer_size = mesh->mNumVertices * size;
-    //  auto *texture_buffer = new float[buffer_size];
-    //  for (auto i = 0u; i < mesh->mNumVertices; ++i) {
-    //    texture_buffer[i * size] = mesh->mTextureCoords[0][i].x;
-    //    texture_buffer[i * size + 1] = mesh->mTextureCoords[0][i].y;
+    // buffer for vertex normals
+    //if (mesh->HasNormals()) {
+    //  glGenBuffers(1, &buffer);
+    //  glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    //  glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * mesh->mNumVertices, mesh->mNormals, GL_STATIC_DRAW);
+    //  glEnableVertexAttribArray(1);
+    //  glVertexAttribPointer(1, 3, GL_FLOAT, 0, 0, 0);
+    //}
+
+    // buffer for vertex texture coordinates
+    //if (mesh->HasTextureCoords(0)) {
+    //  float *texCoords = (float *)malloc(sizeof(float) * 2 * mesh->mNumVertices);
+    //  for (unsigned int k = 0; k < mesh->mNumVertices; ++k) {
+
+    //    texCoords[k * 2] = mesh->mTextureCoords[0][k].x;
+    //    texCoords[k * 2 + 1] = mesh->mTextureCoords[0][k].y;
+
     //  }
-    //  glBufferSubData(GL_ARRAY_BUFFER, offset_counter, buffer_size, texture_buffer);
-    //  glEnableVertexAttribArray(this->id_counter);
-    //  glVertexAttribPointer(this->id_counter, size, GL_FLOAT, GL_FALSE, 0, (void*)offset_counter);
-    //  delete[] texture_buffer;
-    //  this->id_counter += 1u;
+    //  glGenBuffers(1, &buffer);
+    //  glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    //  glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 2 * mesh->mNumVertices, texCoords, GL_STATIC_DRAW);
+    //  glEnableVertexAttribArray(2);
+    //  glVertexAttribPointer(2, 2, GL_FLOAT, 0, 0, 0);
+    //}
 
-    // Insert vertex normal data
-    offset_counter += buffer_size;
-    size = 3;
-    buffer_size = mesh->mNumVertices * size;
-    auto *normal_buffer = new float[buffer_size];
-    for (auto i = 0u; i < mesh->mNumVertices; ++i) {
-      normal_buffer[i * size] = mesh->mNormals[i].x;
-      normal_buffer[i * size + 1] = mesh->mNormals[i].y;
-      normal_buffer[i * size + 2] = mesh->mNormals[i].z;
-    }
-    glBufferSubData(GL_ARRAY_BUFFER, offset_counter, buffer_size, normal_buffer);
-    glEnableVertexAttribArray(this->id_counter);
-    glVertexAttribPointer(this->id_counter, size, GL_FLOAT, GL_FALSE, 0, (void*)offset_counter);
-    delete[] normal_buffer;
-    this->id_counter += 1;
-
-
-    // Insert element buffer
-    unsigned index_buffer_id;
-    glGenBuffers(1, &index_buffer_id);
-    model.buffer_ids.push_back(index_buffer_id);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_id);
-    auto *element_buffer = new unsigned[mesh->mNumFaces * 3];
-    for (auto i = 0u; i < mesh->mNumFaces; ++i) {
-      element_buffer[i * 3] = mesh->mFaces[i].mIndices[0];
-      element_buffer[i * 3 + 1] = mesh->mFaces[i].mIndices[1];
-      element_buffer[i * 3 + 2] = mesh->mFaces[i].mIndices[2];
-    }
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * mesh->mNumFaces * sizeof(unsigned), element_buffer, GL_STATIC_DRAW);
-    delete[] element_buffer;
-
-    //glEnableVertexAttribArray(3);
-    //glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-    // Unbind buffers and arrays
+    // unbind buffers
+    glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-    //}
+
+    this->model_ids.insert(this->model_ids.begin() + model.id, true);
+    this->model_sizes.insert(this->model_sizes.begin() + model.id, mesh->mNumFaces * 3);
   }
   return (*this);
 }
 engine& engine::operator+=(glm::mat4 buffer) {
-  glUniformMatrix4fv(this->id_counter, 16, GL_FALSE, glm::value_ptr(buffer));
+  glUniformMatrix4fv(2, 1, GL_FALSE, glm::value_ptr(buffer));
+  glDrawElements(GL_TRIANGLES, this->model_sizes[this->id_counter], GL_UNSIGNED_INT, NULL);
+
   return (*this);
 }
 engine& engine::operator-=(model model) {

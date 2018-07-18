@@ -1,6 +1,6 @@
 #pragma once
 
-#include "extra.hpp"
+#include "physics.hpp"
 
 namespace gl {
   namespace callback {
@@ -39,6 +39,10 @@ namespace gl {
     tess_evaluation,
     fragment
   };
+  enum projection_type : bool {
+    perspective,
+    orthogonal
+  };
 
   struct title {
     const char* name;
@@ -62,10 +66,12 @@ namespace gl {
 
   class engine {
     private:
-      std::vector<bool> window_ids;
-      std::vector<bool> program_ids;
-      std::vector<bool> model_ids;
+      boost::container::vector<bool> window_ids;
+      boost::container::vector<bool> program_ids;
+      boost::container::vector<bool> model_ids;
       unsigned id_counter;
+      int projection_view_model;
+      std::vector<unsigned> model_sizes;
 
     public:
       engine();
@@ -106,11 +112,6 @@ namespace gl {
     glm::mat4 matrix;
 
     model(std::string, glm::vec3, glm::vec3, glm::quat, glm::vec3, glm::quat);
-    model(std::string, glm::vec3, glm::vec3, glm::quat, glm::vec3);
-    model(std::string, glm::vec3, glm::vec3, glm::quat);
-    model(std::string, glm::vec3, glm::vec3);
-    model(std::string, glm::vec3);
-    model(std::string);
 
     template<mechanic m, behaviour b>
     model& operator+=(movement<m, b>);
@@ -126,28 +127,31 @@ namespace gl {
     glm::mat4 matrix;
 
     view(glm::vec3, glm::quat, glm::vec3, glm::quat);
-    view(glm::vec3, glm::quat, glm::vec3);
-    view(glm::vec3, glm::quat);
-    view(glm::vec3);
-    view();
 
     template<mechanic m, behaviour b>
     view& operator+=(movement<m, b>);
   };
   class projection {
   private:
-    float fov;
-    float aspect;
+    projection_type type;
+    float left;
+    float right;
+    float bottom;
+    float top;
     float z_near;
     float z_far;
 
   public:
     glm::mat4 matrix;
 
-    projection(float, float, float, float);
-    projection(float, float, float, float, float, float);
+    projection(projection_type, float, float, float, float, float, float);
 
     projection& operator+=(window);
+  };
+
+  struct camera {
+    view view;
+    projection projection;
   };
 
   class window {
@@ -157,7 +161,7 @@ namespace gl {
   public:
     int width, height;
 
-    window();
+    window(int*, char**, std::string, unsigned, unsigned);
 
     window& operator+=(callback::close);
     window& operator+=(callback::display);

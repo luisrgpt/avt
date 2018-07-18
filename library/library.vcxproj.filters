@@ -14,18 +14,18 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\gl\core.hpp">
+    <ClInclude Include="include\gl\graphics.hpp">
       <Filter>Header Files\gl</Filter>
     </ClInclude>
-    <ClInclude Include="include\gl\extra.hpp">
+    <ClInclude Include="include\gl\physics.hpp">
       <Filter>Header Files\gl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\core.cpp">
+    <ClCompile Include="src\physics.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\extra.cpp">
+    <ClCompile Include="src\graphics.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
