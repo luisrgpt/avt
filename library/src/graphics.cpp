@@ -140,19 +140,17 @@ window& window::operator+=(title title) {
   return (*this);
 }
 
-template<mechanic m, behaviour b>
-model& model::operator+=(movement<m, b> movement) {
+model& model::operator+=(kinematic_movement movement) {
   this->object += movement;
-  this->matrix = glm::rotate(this->scale, glm::angle(this->object.orientation), glm::axis(this->object.orientation));
-  this->matrix = glm::translate(this->matrix, this->object.position);
+  this->matrix = glm::translate(this->object.position) * (glm::mat4_cast(this->object.orientation) * this->scale);
   return (*this);
 }
-template<mechanic m, behaviour b>
-view& view::operator+=(movement<m, b> movement) {
+view& view::operator+=(kinematic_movement movement) {
+  std::cout << "click" << std::endl;
   this->object += movement;
+  this->matrix = glm::lookAt(this->object.position, this->object.orientation * glm::vec3(0.0f, 0.0f, 1.0f), this->object.orientation * glm::vec3(0.0f, 1.0f, 0.0f));
   return (*this);
 }
-template view& view::operator+=(movement<kinematic, linear>);
 projection& projection::operator+=(window window) {
   glViewport(0, 0, window.width, window.height);
 

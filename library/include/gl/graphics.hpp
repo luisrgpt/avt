@@ -113,8 +113,8 @@ namespace gl {
 
     model(std::string, glm::vec3, glm::vec3, glm::quat, glm::vec3, glm::quat);
 
-    template<mechanic m, behaviour b>
-    model& operator+=(movement<m, b>);
+    model& operator+=(kinematic_movement);
+    //model& operator+=(dynamic_movement);
 
     friend engine& engine::operator+=(model);
     friend engine& engine::operator-=(model);
@@ -128,8 +128,8 @@ namespace gl {
 
     view(glm::vec3, glm::quat, glm::vec3, glm::quat);
 
-    template<mechanic m, behaviour b>
-    view& operator+=(movement<m, b>);
+    view& operator+=(kinematic_movement);
+    //view& operator+=(dynamic_movement);
   };
   class projection {
   private:

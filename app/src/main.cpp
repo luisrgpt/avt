@@ -33,10 +33,10 @@ void keyboard(unsigned char key, int x, int y) {
       //  current_camera = 2;
       //  break;
       case 'a':
-        cameras[1].view += gl::movement<gl::kinematic, gl::linear>(glm::vec3(-100.0f, 0.0f, 0.0f), 1);
+        cameras[1].view += gl::linear_movement(glm::vec3(-100.0f, 0.0f, 0.0f), 1);
         break;
       case 'd':
-        cameras[1].view += gl::movement<gl::kinematic, gl::linear>(glm::vec3(100.0f, 0.0f, 0.0f), 1);
+        cameras[1].view += gl::linear_movement(glm::vec3(100.0f, 0.0f, 0.0f), 1);
         break;
 //        is_perspective = !is_perspective;
 //        projection = kProjections[is_perspective];

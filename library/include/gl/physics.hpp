@@ -23,16 +23,13 @@
 #include "glm/gtx/transform.hpp"
 
 namespace gl {
-  enum mechanic {
-    kinematic,
-    dynamic
-  };
   enum behaviour {
     linear,
     seek
   };
 
-  template<mechanic m, behaviour b> struct movement {};
+  class kinematic_movement;
+  class dynamic_movement;
   class object {
   public:
     // Static data
@@ -50,47 +47,45 @@ namespace gl {
       glm::quat
     );
 
-    template<behaviour type>
-    object& operator+=(movement<kinematic, type>);
-    template<behaviour type>
-    object& operator+=(movement<dynamic, type>);
+    object& operator+=(kinematic_movement);
+    object& operator+=(dynamic_movement);
   };
 
-  template<> class movement<kinematic, linear> {
-  public:
+
+  class kinematic_movement {
+  private:
     glm::vec3 linear;
     glm::quat angular;
     float duration;
     float max_speed;
 
-    movement(glm::vec3, float);
-
-    template<behaviour type>
-    friend object& object::operator+=(movement<kinematic, type>);
-  };
-  template<> class movement<kinematic, seek> {
   public:
-    glm::vec3 linear;
-    glm::quat angular;
-    float duration;
-    float max_speed;
-
-    movement(object, float, float);
-
-    template<behaviour type>
-    friend object& object::operator+=(movement<kinematic, type>);
+    kinematic_movement(glm::vec3, glm::quat, float, float);
+    friend object& object::operator+=(kinematic_movement);
   };
-  template<> class movement<dynamic, seek> {
+
+  //class dynamic_movement {
+  //private:
+  //  glm::vec3 linear;
+  //  glm::quat angular;
+  //  float duration;
+  //  float max_speed;
+  //  float max_acceleration;
+
+  //public:
+  //  dynamic_movement(glm::vec3, glm::quat, float, float, float);
+  //  friend object& object::operator+=(dynamic_movement);
+  //};
+
+  class linear_movement : public kinematic_movement {
   public:
-    glm::vec3 linear;
-    glm::quat angular;
-    float duration;
-    float max_speed;
-    float max_acceleration;
-
-    movement(object, float, float, float);
-
-    template<behaviour type>
-    friend object& object::operator+=(movement<dynamic, type>);
+    linear_movement(glm::vec3, float);
   };
+  //class kinematic_seek : public kinematic_movement {
+  //public:
+  //  kinematic_seek(object, float, float);
+  //};
+  //class dynamic_seek : public dynamic_movement {
+  //  dynamic_seek(object, float, float, float);
+  //};
 }
