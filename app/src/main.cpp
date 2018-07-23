@@ -1,18 +1,18 @@
 ﻿#include <gl/graphics.hpp>
 #include <iostream>
+#include <functional>
 
 constexpr unsigned
   fps = 60,
   mhz = 1000 / fps,
-  window_width = 640,
-  window_height = 480;
-constexpr float
-  projection_width = window_width / 2.0f,
-  projection_height = window_height / 2.0f;
+  width = 640,
+  height = 480;
+
 gl::engine *engine;
 gl::program *program;
-gl::window *window;
-std::vector<gl::model> models;
+gl::mesh *mesh;
+gl::uniform *projection_view_model;
+gl::graph<gl::model> *scene_graph;
 std::vector<gl::camera> cameras;
 unsigned current_camera;
 
@@ -33,24 +33,65 @@ void keyboard(unsigned char key, int x, int y) {
       //  current_camera = 2;
       //  break;
       case 'a':
-        cameras[1].view += gl::linear_movement(glm::vec3(-100.0f, 0.0f, 0.0f), 1);
+        for (auto &camera : cameras) {
+          camera.view.execute(gl::linear_movement(camera.view.object.orientation * glm::vec3(-1.0f, 0.0f, 0.0f), 1));
+        }
         break;
       case 'd':
-        cameras[1].view += gl::linear_movement(glm::vec3(100.0f, 0.0f, 0.0f), 1);
+        for (auto &camera : cameras) {
+          camera.view.execute(gl::linear_movement(camera.view.object.orientation * glm::vec3(1.0f, 0.0f, 0.0f), 1));
+        }
         break;
-//        is_perspective = !is_perspective;
-//        projection = kProjections[is_perspective];
-//        break;
-//      case 'w':
-//        state_position = current_position + state_front * 0.1f;
-//
-//        view = glm::lookAt(state_position, state_position + state_front, state_up);
-//        return;
-//      case 's':
-//        state_position = current_position - state_front * 0.1f;
-//
-//        view = glm::lookAt(state_position, state_position + state_front, state_up);
-//        return;
+      case 's':
+        for (auto &camera : cameras) {
+          camera.view.execute(gl::linear_movement(camera.view.object.orientation * glm::vec3(0.0f, -1.0f, 0.0f), 1));
+        }
+        break;
+      case 'w':
+        for (auto &camera : cameras) {
+          camera.view.execute(gl::linear_movement(camera.view.object.orientation * glm::vec3(0.0f, 1.0f, 0.0f), 1));
+        }
+        break;
+      case 'q':
+        for (auto &camera : cameras) {
+          camera.view.execute(gl::linear_movement(camera.view.object.orientation * glm::vec3(0.0f, 0.0f, -1.0f), 1));
+        }
+        break;
+      case 'e':
+        for (auto &camera : cameras) {
+          camera.view.execute(gl::linear_movement(camera.view.object.orientation * glm::vec3(0.0f, 0.0f, 1.0f), 1));
+        }
+        break;
+      case 'j':
+        for (auto &camera : cameras) {
+          camera.view.execute(gl::rotation(glm::angleAxis(0.02f, camera.view.object.orientation * glm::vec3(0.0f, 1.0f, 0.0f)), 1));
+        }
+        break;
+      case 'l':
+        for (auto &camera : cameras) {
+          camera.view.execute(gl::rotation(glm::angleAxis(0.02f, camera.view.object.orientation * glm::vec3(0.0f, -1.0f, 0.0f)), 1));
+        }
+        break;
+      case 'k':
+        for (auto &camera : cameras) {
+          camera.view.execute(gl::rotation(glm::angleAxis(0.02f, camera.view.object.orientation * glm::vec3(-1.0f, 0.0f, 0.0f)), 1));
+        }
+        break;
+      case 'i':
+        for (auto &camera : cameras) {
+          camera.view.execute(gl::rotation(glm::angleAxis(0.02f, camera.view.object.orientation * glm::vec3(1.0f, 0.0f, 0.0f)), 1));
+        }
+        break;
+      case 'u':
+        for (auto &camera : cameras) {
+          camera.view.execute(gl::rotation(glm::angleAxis(0.02f, camera.view.object.orientation * glm::vec3(0.0f, 0.0f, 1.0f)), 1));
+        }
+        break;
+      case 'o':
+        for (auto &camera : cameras) {
+          camera.view.execute(gl::rotation(glm::angleAxis(0.02f, camera.view.object.orientation * glm::vec3(0.0f, 0.0f, -1.0f)), 1));
+        }
+        break;
     }
 }
 void motion(int x, int y) {
@@ -81,33 +122,25 @@ void mouse(int button, int state, int x, int y) {
 //    }
 }
 void display() {
-  *engine += *program;
-  for (gl::model& model : models) {
-    *engine += model;
+  //engine->use(*program);
+  //engine->bind(*mesh);
+  //engine->set_uniform(
+  //  *projection_view_model,
+  //  cameras[current_camera].projection.matrix *
+  //  cameras[current_camera].view.matrix *
+  //  glm::translate(models->at(0).object.position) *
+  //  glm::mat4_cast(models->at(0).object.orientation) *
+  //  models->at(0).scale
+  //);
+  //engine->draw(*mesh);
+  //engine->unbind();
+  //engine->unuse();
 
-    //std::cout << "Model:" << std::endl;
-    //std::cout << model.matrix[0][0] << " " << model.matrix[0][1] << " " << model.matrix[0][2] << " " << model.matrix[0][3] << std::endl;
-    //std::cout << model.matrix[1][0] << " " << model.matrix[1][1] << " " << model.matrix[1][2] << " " << model.matrix[1][3] << std::endl;
-    //std::cout << model.matrix[2][0] << " " << model.matrix[2][1] << " " << model.matrix[2][2] << " " << model.matrix[2][3] << std::endl;
-    //std::cout << model.matrix[3][0] << " " << model.matrix[3][1] << " " << model.matrix[3][2] << " " << model.matrix[3][3] << std::endl;
-    //std::cout << std::endl;
-    //std::cout << "View:" << std::endl;
-    //std::cout << view->matrix[0][0] << " " << view->matrix[0][1] << " " << view->matrix[0][2] << " " << view->matrix[0][3] << std::endl;
-    //std::cout << view->matrix[1][0] << " " << view->matrix[1][1] << " " << view->matrix[1][2] << " " << view->matrix[1][3] << std::endl;
-    //std::cout << view->matrix[2][0] << " " << view->matrix[2][1] << " " << view->matrix[2][2] << " " << view->matrix[2][3] << std::endl;
-    //std::cout << view->matrix[3][0] << " " << view->matrix[3][1] << " " << view->matrix[3][2] << " " << view->matrix[3][3] << std::endl;
-    //std::cout << std::endl;
-    //std::cout << "Projection:" << std::endl;
-    //std::cout << cameras[current_camera].projection.matrix[0][0] << " " << cameras[current_camera].projection.matrix[0][1] << " " << cameras[current_camera].projection.matrix[0][2] << " " << cameras[current_camera].projection.matrix[0][3] << std::endl;
-    //std::cout << cameras[current_camera].projection.matrix[1][0] << " " << cameras[current_camera].projection.matrix[1][1] << " " << cameras[current_camera].projection.matrix[1][2] << " " << cameras[current_camera].projection.matrix[1][3] << std::endl;
-    //std::cout << cameras[current_camera].projection.matrix[2][0] << " " << cameras[current_camera].projection.matrix[2][1] << " " << cameras[current_camera].projection.matrix[2][2] << " " << cameras[current_camera].projection.matrix[2][3] << std::endl;
-    //std::cout << cameras[current_camera].projection.matrix[3][0] << " " << cameras[current_camera].projection.matrix[3][1] << " " << cameras[current_camera].projection.matrix[3][2] << " " << cameras[current_camera].projection.matrix[3][3] << std::endl;
-    //std::cout << std::endl;
-
-    *engine += (cameras[current_camera].projection.matrix * (cameras[current_camera].view.matrix * model.matrix));
-    *engine -= model;
-  }
-  *engine -= *program;
+  engine->draw(
+    *projection_view_model,
+    *scene_graph,
+    cameras[current_camera]
+  );
 }
 int cnt = 0;
 void timer(int value) {
@@ -120,75 +153,89 @@ void timer(int value) {
 //      + std::to_string(window.height)
 //      + ")";
 
-  *window += gl::title{ title.c_str() };
-  *window += gl::callback::timer{ mhz , timer, 0 };
+  engine->set_title(std::cref(title));
+  engine->set_timer_callback(mhz , timer, 0);
 
-  *engine += *window;
+  engine->display();
 }
 void reshape(int width, int height) {
-  window->width = width;
-  window->height = height;
-
-  cameras[current_camera].projection += *window;
+  cameras[current_camera].projection.reshape(width, height);
 }
 
 int main(int argc, char **argv) {
-  engine = new gl::engine();
-  window = new gl::window(&argc, argv, "avt", window_width, window_height);
-  program = new gl::program();
-  models = {
+  engine = new gl::engine(&argc, argv, "avt", width, height);
+  engine->set_close_callback(close);
+  engine->set_display_callback(display);
+  engine->set_idle_callback(idle);
+  engine->set_reshape_callback(reshape);
+  engine->set_keyboard_callback(keyboard);
+  engine->set_motion_callback(motion);
+  engine->set_mouse_callback(mouse);
+  engine->set_timer_callback(0 , timer, 0);
+
+  program = engine->create_program();
+  engine->load_shader<gl::vertex>(*program, "share/position_vertex.glsl");
+  engine->load_shader<gl::fragment>(*program, "share/position_fragment.glsl");
+  engine->link(*program);
+  projection_view_model = engine->get_uniform(*program, "projection_view_model");
+
+  mesh = engine->load_mesh(*program, "share/cube.ply");
+
+  scene_graph = new gl::graph<gl::model>();
+  auto front = scene_graph->set_root(
     gl::model(
-      "share/cube.ply",
-      glm::vec3(600, 600, 600),
-      glm::vec3(0, 0, 0), glm::quat(0, 0, 0, 0),
+      *mesh,
+      glm::vec3(10, 10, 10),
+      glm::vec3(0, 0, 0), glm::quat(0, 0, 0.5, 0),
       glm::vec3(0, 0, 0), glm::quat(0, 0, 0, 0)
     )
-  };
+  );
+  scene_graph->set_root(
+    gl::model(
+      *mesh,
+      glm::vec3(10, 10, 10),
+      glm::vec3(20, 0, 20), glm::quat(0, 0, 0, 0),
+      glm::vec3(0, 0, 0), glm::quat(0, 0, 0, 0)
+    )
+  );
+  scene_graph->set_child(
+    *front,
+    gl::model(
+      *mesh,
+      glm::vec3(1, 1, 1),
+      glm::vec3(0, 10, 0), glm::quat(0, 0, 0, 0),
+      glm::vec3(0, 0, 0), glm::quat(0, 0, 0, 0)
+    )
+  );
   cameras = {
     gl::camera{
-      gl::view(
-        glm::vec3(0, 0, 610), glm::quat(0, 0, 0, 0),
-        glm::vec3(0, 0, 0), glm::quat(0, 0, 0, 0)
-      ),
-      gl::projection(
-        gl::perspective,
-        -projection_width, projection_width,
-        -projection_height, projection_height,
-         10.0f, 1000.0f
-      )
-    },
-    gl::camera{
     gl::view(
-      glm::vec3(0, 0, 610), glm::quat(0, 0, 0, 0),
+      glm::vec3(0, 0, 50), glm::angleAxis(0.0f, glm::vec3(0.0f, 1.0f, 0.0f)),
       glm::vec3(0, 0, 0), glm::quat(0, 0, 0, 0)
     ),
-    gl::projection(
-      gl::orthogonal,
-      -projection_width, projection_width,
-      -projection_height, projection_height,
-      10.0f, 1000.0f
+    gl::perspective_projection(
+      width, height,
+      -0.3f, 0.3f,
+      -0.3f, 0.3f,
+      1.0f, 100.0f
+    )
+  },
+    gl::camera{
+    gl::view(
+      glm::vec3(0, 0, 50), glm::angleAxis(0.0f, glm::vec3(0.0f, 1.0f, 0.0f)),
+      glm::vec3(0, 0, 0), glm::quat(0, 0, 0, 0)
+    ),
+    gl::orthogonal_projection(
+      width, height,
+      -10.0f, 10.0f,
+      -10.0f, 10.0f,
+      1.0f, 100.0f
     )
   }
   };
   current_camera = 0;
 
-  *window += gl::callback::close{ close };
-  *window += gl::callback::display{ display };
-  *window += gl::callback::idle{ idle };
-  *window += gl::callback::reshape{ reshape };
-  *window += gl::callback::keyboard{ keyboard };
-  *window += gl::callback::motion{ motion };
-  *window += gl::callback::mouse{ mouse };
-  *window += gl::callback::timer{0 , timer, 0};
-
-  *program += gl::shader<gl::vertex>{ "share/position_vertex.glsl" };
-  *program += gl::shader<gl::fragment>{ "share/position_fragment.glsl" };
-
-  *engine += *program;
-  for (gl::model& model : models) {
-    *engine += model;
-  }
-  *engine += *window;
+  engine->start();
 
   return (0);
 }

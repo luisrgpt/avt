@@ -1,4 +1,5 @@
 #include <gl/physics.hpp>
+#include <iostream>
 
 using namespace gl;
 
@@ -15,7 +16,11 @@ kinematic_movement::kinematic_movement(
 linear_movement::linear_movement(
   glm::vec3 linear,
   float duration)
-  : kinematic_movement(linear, glm::quat(), duration, 10000) {}
+  : kinematic_movement(linear, glm::angleAxis(0.0f, glm::vec3(0.0f, 1.0f, 0.0f)), duration, 10000) {}
+rotation::rotation(
+  glm::quat angular,
+  float duration)
+  : kinematic_movement(glm::vec3(), angular, duration, 10000) {}
 //kinematic_seek::kinematic_seek(
 //  object target,
 //  float duration,
@@ -58,11 +63,13 @@ object::object(
   , velocity(velocity)
   , rotation(rotation) {}
 
-object& object::operator+=(kinematic_movement movement) {
+void object::execute(kinematic_movement movement) {
   // Integrate with velocity
   this->position += movement.linear * movement.duration;
   for (auto count = 0u; count < movement.duration; count++) {
-    this->orientation *= movement.angular;
+    std::cout << (this->orientation).x << " " << (this->orientation).y << " " << (this->orientation).z << " " << (this->orientation).w;
+    this->orientation = movement.angular * this->orientation;
+    std::cout << " -> " << (this->orientation).x << " " << (this->orientation).y << " " << (this->orientation).z << " " << (this->orientation).w << std::endl;
   }
 
   // Set orientation from velocity
@@ -71,10 +78,8 @@ object& object::operator+=(kinematic_movement movement) {
   //  // Convert vector to orientation
   //  this->orientation = std::atan2(movement.linear.x, movement.linear.z);
   //}
-
-  return (*this);
 }
-//object& object::operator+=(dynamic_movement movement) {
+//void object::execute(dynamic_movement movement) {
 //  // Integrate with velocity
 //  this->position += this->velocity * movement.duration;
 //  this->orientation *= std::pow(this->rotation, movement.duration);
@@ -95,6 +100,4 @@ object& object::operator+=(kinematic_movement movement) {
 //    this->velocity = glm::normalize(this->velocity);
 //    this->velocity *= movement.max_speed;
 //  }
-//
-//  return (*this);
 //}

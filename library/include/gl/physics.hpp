@@ -1,12 +1,14 @@
 #pragma once
 
 #include <boost/container/vector.hpp>
+#include <cassert>
 #include <cstdlib>
 #include <cmath>
 #include <fstream>
 #include <iterator>
 #include <string>
 #include <vector>
+#include <map>
 
 #include "glm/fwd.hpp"
 #include "glm/geometric.hpp"
@@ -47,8 +49,8 @@ namespace gl {
       glm::quat
     );
 
-    object& operator+=(kinematic_movement);
-    object& operator+=(dynamic_movement);
+    void execute(kinematic_movement);
+    //void execute(dynamic_movement);
   };
 
 
@@ -61,7 +63,7 @@ namespace gl {
 
   public:
     kinematic_movement(glm::vec3, glm::quat, float, float);
-    friend object& object::operator+=(kinematic_movement);
+    friend void object::execute(kinematic_movement);
   };
 
   //class dynamic_movement {
@@ -74,12 +76,16 @@ namespace gl {
 
   //public:
   //  dynamic_movement(glm::vec3, glm::quat, float, float, float);
-  //  friend object& object::operator+=(dynamic_movement);
+  //  friend void object::execute(dynamic_movement);
   //};
 
   class linear_movement : public kinematic_movement {
   public:
     linear_movement(glm::vec3, float);
+  };
+  class rotation : public kinematic_movement {
+  public:
+    rotation(glm::quat, float);
   };
   //class kinematic_seek : public kinematic_movement {
   //public:

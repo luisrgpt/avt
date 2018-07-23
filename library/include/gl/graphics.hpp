@@ -3,34 +3,6 @@
 #include "physics.hpp"
 
 namespace gl {
-  namespace callback {
-    struct close {
-      void(*handler)(void);
-    };
-    struct display {
-      void(*handler)(void);
-    };
-    struct idle {
-      void(*handler)(void);
-    };
-    struct reshape {
-      void(*handler)(int, int);
-    };
-    struct keyboard {
-      void(*handler)(unsigned char, int, int);
-    };
-    struct motion {
-      void(*handler)(int, int);
-    };
-    struct mouse {
-      void(*handler)(int, int, int, int);
-    };
-    struct timer {
-      const unsigned time;
-      void(*handler)(int);
-      const int value;
-    };
-  }
   enum shader_type {
     compute,
     vertex,
@@ -44,12 +16,21 @@ namespace gl {
     orthogonal
   };
 
-  struct title {
-    const char* name;
+  struct program {
+    const unsigned id;
   };
-  template<shader_type type> struct shader {
-    const std::string filename;
+  struct mesh {
+    const unsigned id;
+    const unsigned size;
+    const unsigned program_id;
   };
+  struct uniform {
+    const int id;
+  };
+  struct node {
+    const unsigned id;
+  };
+
   //template struct shader<compute>;
   //template struct shader<vertex>;
   //template struct shader<geometry>;
@@ -57,79 +38,26 @@ namespace gl {
   //template struct shader<tess_evaluation>;
   //template struct shader<fragment>;
 
-  class engine;
-  class program;
-  class model;
-  class view;
-  class projection;
-  class window;
-
-  class engine {
-    private:
-      boost::container::vector<bool> window_ids;
-      boost::container::vector<bool> program_ids;
-      boost::container::vector<bool> model_ids;
-      unsigned id_counter;
-      int projection_view_model;
-      std::vector<unsigned> model_sizes;
-
-    public:
-      engine();
-
-      engine& operator+=(window);
-      engine& operator+=(program);
-      engine& operator+=(model);
-      engine& operator+=(glm::mat4);
-      engine& operator-=(model);
-      engine& operator-=(program);
-  };
-
-  class program {
-    private:
-      unsigned id;
-      std::vector<unsigned> shader_ids;
-
-    public:
-      program();
-
-      template<shader_type type>
-      program& operator+=(shader<type>);
-      friend engine& engine::operator+=(program);
-      friend engine& engine::operator-=(program);
-  };
-
   class model {
-  private:
-    std::string filename;
-    glm::mat4 scale;
-    object object;
-
-    unsigned id;
-    std::vector<unsigned> buffer_ids;
-    unsigned id_counter;
-
   public:
-    glm::mat4 matrix;
+    mesh mesh_info;
+    object object;
+    glm::mat4 scale;
 
-    model(std::string, glm::vec3, glm::vec3, glm::quat, glm::vec3, glm::quat);
+    model(mesh, glm::vec3, glm::vec3, glm::quat, glm::vec3, glm::quat);
 
-    model& operator+=(kinematic_movement);
-    //model& operator+=(dynamic_movement);
-
-    friend engine& engine::operator+=(model);
-    friend engine& engine::operator-=(model);
+    void execute(kinematic_movement);
+    //void execute(dynamic_movement);
   };
   class view {
-  private:
-    object object;
-
   public:
+    object object;
     glm::mat4 matrix;
 
     view(glm::vec3, glm::quat, glm::vec3, glm::quat);
 
-    view& operator+=(kinematic_movement);
-    //view& operator+=(dynamic_movement);
+    void execute(kinematic_movement);
+    //void execute(dynamic_movement);
   };
   class projection {
   private:
@@ -141,12 +69,21 @@ namespace gl {
     float z_near;
     float z_far;
 
+  protected:
+    projection(projection_type, float, float, float, float, float, float, glm::mat4);
+
   public:
     glm::mat4 matrix;
 
-    projection(projection_type, float, float, float, float, float, float);
-
-    projection& operator+=(window);
+    void reshape(float, float);
+  };
+  class orthogonal_projection : public projection {
+  public:
+    orthogonal_projection(float, float, float, float, float, float, float, float);
+  };
+  class perspective_projection : public projection {
+  public:
+    perspective_projection(float, float, float, float, float, float, float, float);
   };
 
   struct camera {
@@ -154,26 +91,70 @@ namespace gl {
     projection projection;
   };
 
-  class window {
+  template<class type>
+  class graph {
   private:
-    int id;
+    node root;
 
   public:
-    int width, height;
+    unsigned counter;
+    std::vector<type> nodes;
+    std::vector<node> edges;
+    graph();
 
-    window(int*, char**, std::string, unsigned, unsigned);
+    node* set_root(type);
+    node* set_child(node, type);
+    type& get(node);
+  };
+  template class graph<model>;
 
-    window& operator+=(callback::close);
-    window& operator+=(callback::display);
-    window& operator+=(callback::idle);
-    window& operator+=(callback::reshape);
-    window& operator+=(callback::keyboard);
-    window& operator+=(callback::motion);
-    window& operator+=(callback::mouse);
-    window& operator+=(callback::timer);
-    window& operator+=(title);
+  class engine {
+  private:
+    boost::container::vector<bool> window_ids;
+    boost::container::vector<bool> program_ids;
+    std::vector<std::map<shader_type, unsigned>> shader_ids;
+    boost::container::vector<bool> mesh_ids;
+    unsigned current_mesh_id;
+    unsigned current_program_id;
+    float width, height;
+    int window_id;
 
-    friend engine& engine::operator+=(window);
-    friend projection& projection::operator+=(window);
+  public:
+    engine(int*, char**, std::string, unsigned, unsigned);
+
+    void set_close_callback(void(*)(void));
+    void set_display_callback(void(*)(void));
+    void set_idle_callback(void(*)(void));
+    void set_reshape_callback(void(*)(int, int));
+    void set_keyboard_callback(void(*)(unsigned char, int, int));
+    void set_motion_callback(void(*)(int, int));
+    void set_mouse_callback(void(*)(int, int, int, int));
+    void set_timer_callback(const unsigned, void(*)(int), const int);
+    void set_title(std::string);
+
+    void start();
+    void display();
+
+    program* create_program();
+    template<shader_type type>
+    void load_shader(program, std::string);
+    uniform* get_uniform(program, std::string);
+    void link(program);
+
+    mesh* load_mesh(program, std::string);
+
+    void use(program);
+    void bind(mesh);
+
+    void set_uniform(uniform, glm::mat4);
+
+    void draw(mesh);
+    void draw(uniform, graph<model>, camera);
+
+    void unbind();
+    void unuse();
+
+    //void unload_shader(program, std::string);
+    //void destroy_program();
   };
 }
