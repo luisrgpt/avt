@@ -11,6 +11,10 @@ namespace gl {
     tess_evaluation,
     fragment
   };
+  enum scene_type {
+    gltf,
+    obj
+  };
   enum projection_type : bool {
     perspective,
     orthogonal
@@ -20,16 +24,30 @@ namespace gl {
     const unsigned id;
   };
   struct mesh {
-    const unsigned id;
-    const unsigned size;
-    const unsigned program_id;
+    unsigned id;
+    unsigned n_faces;
+    unsigned program_id;
+    unsigned texture_id;
+    unsigned block_id;
+  };
+  struct material {
+    float diffuse[4];
+    float ambient[4];
+    float specular[4];
+    float emissive[4];
+    float shininess;
+    int n_textures;
   };
   struct uniform {
+    const int id;
+  };
+  struct uniform_block {
     const int id;
   };
   struct node {
     const unsigned id;
   };
+  typedef std::vector<mesh> scene;
 
   //template struct shader<compute>;
   //template struct shader<vertex>;
@@ -40,11 +58,11 @@ namespace gl {
 
   class model {
   public:
-    mesh mesh_info;
+    scene scene_info;
     object object;
     glm::mat4 scale;
 
-    model(mesh, glm::vec3, glm::vec3, glm::quat, glm::vec3, glm::quat);
+    model(scene, glm::vec3, glm::vec3, glm::quat, glm::vec3, glm::quat);
 
     void execute(kinematic_movement);
     //void execute(dynamic_movement);
@@ -139,9 +157,11 @@ namespace gl {
     template<shader_type type>
     void load_shader(program, std::string);
     uniform* get_uniform(program, std::string);
+    //uniform_block* get_uniform_block(program, std::string);
     void link(program);
 
-    mesh* load_mesh(program, std::string);
+    template<scene_type type>
+    scene* load_scene(program, std::string);
 
     void use(program);
     void bind(mesh);

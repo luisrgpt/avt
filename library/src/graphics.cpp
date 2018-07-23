@@ -10,13 +10,13 @@
 using namespace gl;
 
 model::model(
-  mesh mesh,
+  scene scene,
   glm::vec3 scale,
   glm::vec3 position,
   glm::quat orientation,
   glm::vec3 velocity,
   glm::quat rotation)
-  : mesh_info(mesh)
+  : scene_info(scene)
   , object(position, orientation, velocity, rotation)
   , scale(glm::scale(scale)) {}
 view::view(
@@ -261,6 +261,16 @@ uniform* engine::get_uniform(program program, std::string name) {
 
   return new uniform{ id };
 }
+//uniform_block* engine::get_uniform_block(program program, std::string name) {
+//  assert(this->shader_ids.size() > program.id && this->shader_ids[program.id].size() > 0);
+//
+//  int id = glGetUniformBlockIndex(program.id, name.c_str());
+//  assert(glGetError() == GL_NO_ERROR);
+//  glUniformBlockBinding(program.id, id, GL_ZERO);
+//  assert(glGetError() == GL_NO_ERROR);
+//
+//  return new uniform_block{ id };
+//}
 void engine::link(program program) {
   assert(this->shader_ids.size() > program.id && this->shader_ids[program.id].size() > 0);
 
@@ -278,81 +288,246 @@ void engine::link(program program) {
   this->program_ids.insert(this->program_ids.begin() + program.id, true);
 }
 
-mesh* engine::load_mesh(program program, std::string filename) {
+template<scene_type type>
+scene* engine::load_scene(program program, std::string filename) {
   assert(this->program_ids.size() > program.id && this->program_ids[program.id]);
 
-  Assimp::Importer importer;
-  auto *scene = importer.ReadFile(filename, NULL);
-  //for (auto i = 0u; i < scene->mNumMeshes; ++i) {
-  auto *ai_mesh = scene->mMeshes[0];
-
-  // create array with faces
-  // have to convert from Assimp format to array
-  unsigned buffer;
-  unsigned int *faceArray;
-  faceArray = (unsigned int *)malloc(sizeof(unsigned int) * ai_mesh->mNumFaces * 3);
-  unsigned int faceIndex = 0;
-
-  for (unsigned int t = 0; t < ai_mesh->mNumFaces; ++t) {
-    const aiFace* face = &ai_mesh->mFaces[t];
-
-    memcpy(&faceArray[faceIndex], face->mIndices, 3 * sizeof(unsigned int));
-    faceIndex += 3;
+  std::vector<float> x_vertices = std::vector<float>();
+  std::vector<float> x_normals = std::vector<float>();
+  std::vector<float> x_tex_coords = std::vector<float>();
+  std::vector<std::vector<float>> vertices = std::vector<std::vector<float>>();
+  std::vector<std::vector<float>> normals = std::vector<std::vector<float>>();
+  std::vector<std::vector<float>> tex_coords = std::vector<std::vector<float>>();
+  std::vector<std::vector<unsigned>> vertices_idx = std::vector<std::vector<unsigned>>();
+  std::vector<std::vector<unsigned>> normals_idx = std::vector<std::vector<unsigned>>();
+  std::vector<std::vector<unsigned>> tex_coords_idx = std::vector<std::vector<unsigned>>();
+  int mesh_counter = -1;
+  float f;
+  unsigned u;
+  if constexpr (type == obj) {
+    std::ifstream ifile(filename);
+    std::string line;
+    while (std::getline(ifile, line)) {
+      auto sin = std::stringstream(line);
+      std::string s;
+      sin >> s;
+      if (s.compare("o") == 0) {
+        if (mesh_counter >= 0) {
+          for (auto i = 0u; i < vertices_idx[mesh_counter].size(); i++) {
+            unsigned vi = vertices_idx[mesh_counter][i];
+            vertices[mesh_counter].push_back(x_vertices[(vi - 1) * 3]);
+            vertices[mesh_counter].push_back(x_vertices[(vi - 1) * 3 + 1]);
+            vertices[mesh_counter].push_back(x_vertices[(vi - 1) * 3 + 2]);
+            if (normals_idx[mesh_counter].size() > 0) {
+              unsigned ni = normals_idx[mesh_counter][i];
+              normals[mesh_counter].push_back(x_normals[(ni - 1) * 3]);
+              normals[mesh_counter].push_back(x_normals[(ni - 1) * 3 + 1]);
+              normals[mesh_counter].push_back(x_normals[(ni - 1) * 3 + 2]);
+            }
+            if (tex_coords_idx[mesh_counter].size() > 0) {
+              unsigned ti = tex_coords_idx[mesh_counter][i];
+              tex_coords[mesh_counter].push_back(x_tex_coords[(ti - 1) * 2]);
+              tex_coords[mesh_counter].push_back(x_tex_coords[(ti - 1) * 2 + 1]);
+            }
+          }
+        }
+        mesh_counter += 1;
+        x_vertices.clear();
+        x_normals.clear();
+        x_tex_coords.clear();
+        vertices.push_back(std::vector<float>());
+        normals.push_back(std::vector<float>());
+        tex_coords.push_back(std::vector<float>());
+        vertices_idx.push_back(std::vector<unsigned>());
+        tex_coords_idx.push_back(std::vector<unsigned>());
+        normals_idx.push_back(std::vector<unsigned>());
+      } else if (mesh_counter < 0) {
+        continue;
+      } else if (s.compare("v") == 0) {
+        for (auto i = 0u; i < 3u; i++) {
+          sin >> f;
+          x_vertices.push_back(f);
+        }
+      }
+      else if (s.compare("vn") == 0) {
+        for (auto i = 0u; i < 3u; i++) {
+          sin >> f;
+          x_normals.push_back(f);
+        }
+      }
+      else if (s.compare("vt") == 0) {
+        for (auto i = 0u; i < 2u; i++) {
+          sin >> f;
+          x_tex_coords.push_back(f);
+        }
+      }
+      else if (s.compare("f") == 0) {
+        std::string token;
+        for (auto i = 0u; i < 3u; i++) {
+          std::getline(sin, token, '/');
+          if (token.size() > 0) vertices_idx[mesh_counter].push_back(std::stoi(token));
+          std::getline(sin, token, '/');
+          if (token.size() > 0) tex_coords_idx[mesh_counter].push_back(std::stoi(token));
+          std::getline(sin, token, ' ');
+          if (token.size() > 0) normals_idx[mesh_counter].push_back(std::stoi(token));
+        };
+      }
+    }
+  }
+  if (mesh_counter >= 0) {
+    for (auto i = 0u; i < vertices_idx[mesh_counter].size(); i++) {
+      unsigned vi = vertices_idx[mesh_counter][i];
+      vertices[mesh_counter].push_back(x_vertices[(vi - 1) * 3]);
+      vertices[mesh_counter].push_back(x_vertices[(vi - 1) * 3 + 1]);
+      vertices[mesh_counter].push_back(x_vertices[(vi - 1) * 3 + 2]);
+      if (normals_idx[mesh_counter].size() > 0) {
+        unsigned ni = normals_idx[mesh_counter][i];
+        normals[mesh_counter].push_back(x_normals[(ni - 1) * 3]);
+        normals[mesh_counter].push_back(x_normals[(ni - 1) * 3 + 1]);
+        normals[mesh_counter].push_back(x_normals[(ni - 1) * 3 + 2]);
+      }
+      if (tex_coords_idx[mesh_counter].size() > 0) {
+        unsigned ti = tex_coords_idx[mesh_counter][i];
+        tex_coords[mesh_counter].push_back(x_tex_coords[(ti - 1) * 2]);
+        tex_coords[mesh_counter].push_back(x_tex_coords[(ti - 1) * 2 + 1]);
+      }
+    }
+    mesh_counter += 1;
   }
 
-  // generate Vertex Array for ai_mesh
+  //Assimp::Importer importer;
+  //auto *sc = importer.ReadFile(filename, NULL);
   unsigned id;
-  glCreateVertexArrays(1, &id);
-  glBindVertexArray(id);
+  //material aMat;
+  unsigned buffer;
 
-  // buffer for faces
-  glGenBuffers(1, &buffer);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * ai_mesh->mNumFaces * 3, faceArray, GL_STATIC_DRAW);
-
-  // buffer for vertex positions
-  if (ai_mesh->HasPositions()) {
-    glGenBuffers(1, &buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * ai_mesh->mNumVertices, ai_mesh->mVertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, 0, 0, 0);
+  // For each mesh
+  scene* scene = new std::vector<mesh>();
+  for (auto n = 0; n < mesh_counter; ++n) {
+    // generate Vertex Array for mesh
+    glGenVertexArrays(1,&id);
+    glBindVertexArray(id);
+    assert(glGetError() == GL_NO_ERROR);
+ 
+    // buffer for vertex positions
+    if (vertices[n].size() > 0) {
+      glGenBuffers(1, &buffer);
+      glBindBuffer(GL_ARRAY_BUFFER, buffer);
+      glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices[n].size(), vertices[n].data(), GL_STATIC_DRAW);
+      glEnableVertexAttribArray(0);
+      glVertexAttribPointer(0, 3, GL_FLOAT, 0, 0, 0);
+      assert(glGetError() == GL_NO_ERROR);
+    }
+ 
+    // buffer for vertex normals
+    if (normals[n].size() > 0) {
+      std::cout << normals[n].size() / 3.0f << std::endl;
+      glGenBuffers(1, &buffer);
+      glBindBuffer(GL_ARRAY_BUFFER, buffer);
+      glBufferData(GL_ARRAY_BUFFER, sizeof(float) * normals[n].size(), normals[n].data(), GL_STATIC_DRAW);
+      glEnableVertexAttribArray(1);
+      glVertexAttribPointer(1, 3, GL_FLOAT, 0, 0, 0);
+      assert(glGetError() == GL_NO_ERROR);
+    }
+ 
+    // buffer for vertex texture coordinates
+    if (tex_coords[n].size() > 0) {
+      glGenBuffers(1, &buffer);
+      glBindBuffer(GL_ARRAY_BUFFER, buffer);
+      glBufferData(GL_ARRAY_BUFFER, sizeof(float) * tex_coords[n].size(), tex_coords[n].data(), GL_STATIC_DRAW);
+      glEnableVertexAttribArray(2);
+      glVertexAttribPointer(2, 2, GL_FLOAT, 0, 0, 0);
+      assert(glGetError() == GL_NO_ERROR);
+    }
+ 
+    // unbind buffers
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER,0);
+    assert(glGetError() == GL_NO_ERROR);
+ 
+    //// create material uniform buffer
+    //aiMaterial *mtl = sc->mMaterials[ai_mesh->mMaterialIndex];
+ 
+    //aiString texPath;   //contains filename of texture
+    ////if(AI_SUCCESS == mtl->GetTexture(aiTextureType_DIFFUSE, 0, &texPath)){
+    ////        //bind texture
+    ////        unsigned int texId = textureIdMap[texPath.data];
+    ////        aMesh.texture_id = texId;
+    ////        aMat.n_textures = 1;
+    ////    }
+    ////else
+    //    aMat.n_textures = 0;
+ 
+    //float c[4];
+    //c[0] = 0.8f;
+    //c[1] = 0.8f;
+    //c[2] = 0.8f;
+    //c[3] = 1.0f;
+    //aiColor4D diffuse;
+    //if(AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_DIFFUSE, &diffuse)) {
+    //  c[0] = diffuse.r;
+    //  c[1] = diffuse.g;
+    //  c[2] = diffuse.b;
+    //  c[3] = diffuse.a;
+    //}
+    //memcpy(aMat.diffuse, c, sizeof(c));
+ 
+    //c[0] = 0.2f;
+    //c[1] = 0.2f;
+    //c[2] = 0.2f;
+    //c[3] = 1.0f;
+    //aiColor4D ambient;
+    //if(AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_AMBIENT, &ambient)) {
+    //  c[0] = ambient.r;
+    //  c[1] = ambient.g;
+    //  c[2] = ambient.b;
+    //  c[3] = ambient.a;
+    //}
+    //memcpy(aMat.ambient, c, sizeof(c));
+ 
+    //c[0] = 0.0f;
+    //c[1] = 0.0f;
+    //c[2] = 0.0f;
+    //c[3] = 1.0f;
+    //aiColor4D specular;
+    //if(AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_SPECULAR, &specular)) {
+    //  c[0] = specular.r;
+    //  c[1] = specular.g;
+    //  c[2] = specular.b;
+    //  c[3] = specular.a;
+    //}
+    //memcpy(aMat.specular, c, sizeof(c));
+ 
+    //c[0] = 0.0f;
+    //c[1] = 0.0f;
+    //c[2] = 0.0f;
+    //c[3] = 1.0f;
+    //aiColor4D emission;
+    //if(AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_EMISSIVE, &emission)) {
+    //  c[0] = emission.r;
+    //  c[1] = emission.g;
+    //  c[2] = emission.b;
+    //  c[3] = emission.a;
+    //}
+    //memcpy(aMat.emissive, c, sizeof(c));
+ 
+    //float shininess = 0.0;
+    //unsigned int max;
+    //aiGetMaterialFloatArray(mtl, AI_MATKEY_SHININESS, &shininess, &max);
+    //aMat.shininess = shininess;
+ 
+    //glGenBuffers(1,&(true_mesh.block_id));
+    //glBindBuffer(GL_UNIFORM_BUFFER, true_mesh.block_id);
+    //glBufferData(GL_UNIFORM_BUFFER, sizeof(aMat), (void *)(&aMat), GL_STATIC_DRAW);
+ 
+    //myMeshes.push_back(aMesh)
+    this->mesh_ids.insert(this->mesh_ids.begin() + id, true);
+    unsigned a = vertices_idx[n].size();
+    scene->push_back(mesh{ id, a, program.id, 0, 0 });
   }
-
-  // buffer for vertex normals
-  //if (ai_mesh->HasNormals()) {
-  //  glGenBuffers(1, &buffer);
-  //  glBindBuffer(GL_ARRAY_BUFFER, buffer);
-  //  glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * ai_mesh->mNumVertices, ai_mesh->mNormals, GL_STATIC_DRAW);
-  //  glEnableVertexAttribArray(1);
-  //  glVertexAttribPointer(1, 3, GL_FLOAT, 0, 0, 0);
-  //}
-
-  // buffer for vertex texture coordinates
-  //if (ai_mesh->HasTextureCoords(0)) {
-  //  float *texCoords = (float *)malloc(sizeof(float) * 2 * ai_mesh->mNumVertices);
-  //  for (unsigned int k = 0; k < ai_mesh->mNumVertices; ++k) {
-
-  //    texCoords[k * 2] = ai_mesh->mTextureCoords[0][k].x;
-  //    texCoords[k * 2 + 1] = ai_mesh->mTextureCoords[0][k].y;
-
-  //  }
-  //  glGenBuffers(1, &buffer);
-  //  glBindBuffer(GL_ARRAY_BUFFER, buffer);
-  //  glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 2 * ai_mesh->mNumVertices, texCoords, GL_STATIC_DRAW);
-  //  glEnableVertexAttribArray(2);
-  //  glVertexAttribPointer(2, 2, GL_FLOAT, 0, 0, 0);
-  //}
-
-  // unbind buffers
-  glBindVertexArray(0);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-  this->mesh_ids.insert(this->mesh_ids.begin() + id, true);
-
-  return new mesh{ id, ai_mesh->mNumFaces * 3, program.id };
+  return scene;
 }
+template scene* engine::load_scene<obj>(program, std::string);
 
 void engine::use(program program) {
   assert(this->program_ids.size() > program.id && this->program_ids[program.id]);
@@ -363,15 +538,15 @@ void engine::use(program program) {
 
   this->current_program_id = program.id;
 }
-void engine::bind(mesh mesh) {
+void engine::bind(mesh scene) {
   assert(
-    this->current_program_id == mesh.program_id &&
-    this->mesh_ids.size() > mesh.id &&
-    this->mesh_ids[mesh.id]
+    this->current_program_id == scene.program_id &&
+    this->mesh_ids.size() > scene.id &&
+    this->mesh_ids[scene.id]
   );
 
-  glBindVertexArray(mesh.id);
-  this->current_mesh_id = mesh.id;
+  glBindVertexArray(scene.id);
+  this->current_mesh_id = scene.id;
 }
 
 void engine::set_uniform(uniform uniform, glm::mat4 buffer) {
@@ -457,10 +632,10 @@ void engine::set_uniform(uniform uniform, glm::mat4 buffer) {
 //  glUniformMatrix4x3fv(buffer.id, 12, GL_FALSE, buffer.data.data());
 //  return (*this);
 //}
-void engine::draw(mesh mesh) {
-  assert(this->current_mesh_id == mesh.id);
+void engine::draw(mesh scene) {
+  assert(this->current_mesh_id == scene.id);
 
-  glDrawElements(GL_TRIANGLES, mesh.size, GL_UNSIGNED_INT, NULL);
+  glDrawElements(GL_TRIANGLES, scene.n_faces, GL_UNSIGNED_INT, NULL);
 }
 void engine::draw(
   uniform uniform,
@@ -494,38 +669,52 @@ void engine::draw(
     rotation = glm::mat4_cast(model.object.orientation) * rotations[parent_id];
     scalation = model.scale * scalations[parent_id];
 
-    if (this->current_program_id != model.mesh_info.program_id) {
-      assert(
-        this->program_ids.size() > model.mesh_info.program_id &&
-        this->program_ids[model.mesh_info.program_id]
+    for (auto mesh : model.scene_info) {
+      if (this->current_program_id != mesh.program_id) {
+        assert(
+          this->program_ids.size() > mesh.program_id &&
+          this->program_ids[mesh.program_id]
+        );
+
+        this->current_program_id = mesh.program_id;
+        glUseProgram(current_program_id);
+        assert(glGetError() == GL_NO_ERROR);
+      }
+      if (this->current_mesh_id != mesh.id) {
+        assert(
+          this->mesh_ids.size() > mesh.id &&
+          this->mesh_ids[mesh.id]
+        );
+
+        this->current_mesh_id = mesh.id;
+        glBindVertexArray(current_mesh_id);
+        assert(glGetError() == GL_NO_ERROR);
+      }
+
+      this->set_uniform(
+        uniform,
+        projection *
+        view *
+        translation *
+        rotation *
+        scalation
       );
 
-      this->current_program_id = model.mesh_info.program_id;
-      glUseProgram(current_program_id);
+      //glBindBuffer(GL_UNIFORM_BUFFER, 0);
+      //glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(float) * 16, &projection[0]);
+      //glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 16, sizeof(float) * 16, &view[0]);
+      //glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 32, sizeof(float) * 16, &(translation * rotation * scalation)[0]);
+      //glBindBuffer(GL_UNIFORM_BUFFER, GL_ZERO);
+
+      //glBindBuffer(GL_UNIFORM_BUFFER, 0);
+      //glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(float) * 16, &projection[0]);
+      //glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 16, sizeof(float) * 16, &view[0]);
+      //glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 32, sizeof(float) * 16, &(translation * rotation * scalation)[0]);
+      //glBindBuffer(GL_UNIFORM_BUFFER, GL_ZERO);
+
+      glDrawArrays(GL_TRIANGLES, 0, (GLsizei) mesh.n_faces * 3);
       assert(glGetError() == GL_NO_ERROR);
     }
-    if (this->current_mesh_id != model.mesh_info.id) {
-      assert(
-        this->mesh_ids.size() > model.mesh_info.id &&
-        this->mesh_ids[model.mesh_info.id]
-      );
-
-      this->current_mesh_id = model.mesh_info.id;
-      glBindVertexArray(current_mesh_id);
-      assert(glGetError() == GL_NO_ERROR);
-    }
-
-    this->set_uniform(
-      uniform,
-      projection *
-      view *
-      translation *
-      rotation *
-      scalation
-    );
-
-    glDrawElements(GL_TRIANGLES, model.mesh_info.size, GL_UNSIGNED_INT, NULL);
-    assert(glGetError() == GL_NO_ERROR);
 
     translations.push_back(translation);
     rotations.push_back(rotation);

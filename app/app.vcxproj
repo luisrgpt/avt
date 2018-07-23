@@ -127,6 +127,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="share\cube.mtl" />
     <None Include="share\cube.ply" />
     <None Include="share\normal_fragment.glsl" />
     <None Include="share\normal_vertex.glsl" />

@@ -10,7 +10,7 @@ constexpr unsigned
 
 gl::engine *engine;
 gl::program *program;
-gl::mesh *mesh;
+gl::scene *scene;
 gl::uniform *projection_view_model;
 gl::graph<gl::model> *scene_graph;
 std::vector<gl::camera> cameras;
@@ -179,20 +179,20 @@ int main(int argc, char **argv) {
   engine->link(*program);
   projection_view_model = engine->get_uniform(*program, "projection_view_model");
 
-  mesh = engine->load_mesh(*program, "share/cube.ply");
+  scene = engine->load_scene<gl::obj>(*program, "share/cube.obj");
 
   scene_graph = new gl::graph<gl::model>();
   auto front = scene_graph->set_root(
     gl::model(
-      *mesh,
+      *scene,
       glm::vec3(10, 10, 10),
-      glm::vec3(0, 0, 0), glm::quat(0, 0, 0.5, 0),
+      glm::vec3(0, 0, 0), glm::angleAxis(0.2f, glm::vec3(0.0f, 1.0f, 0.0f)),
       glm::vec3(0, 0, 0), glm::quat(0, 0, 0, 0)
     )
   );
   scene_graph->set_root(
     gl::model(
-      *mesh,
+      *scene,
       glm::vec3(10, 10, 10),
       glm::vec3(20, 0, 20), glm::quat(0, 0, 0, 0),
       glm::vec3(0, 0, 0), glm::quat(0, 0, 0, 0)
@@ -201,9 +201,9 @@ int main(int argc, char **argv) {
   scene_graph->set_child(
     *front,
     gl::model(
-      *mesh,
+      *scene,
       glm::vec3(1, 1, 1),
-      glm::vec3(0, 10, 0), glm::quat(0, 0, 0, 0),
+      glm::vec3(0, 10, 0), glm::angleAxis(0.2f, glm::vec3(0.0f, 1.0f, 0.0f)),
       glm::vec3(0, 0, 0), glm::quat(0, 0, 0, 0)
     )
   );

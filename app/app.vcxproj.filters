@@ -25,6 +25,9 @@
     <None Include="share\normal_vertex.glsl">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="share\cube.mtl">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">

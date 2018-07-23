@@ -8,7 +8,9 @@
 #include <iterator>
 #include <string>
 #include <vector>
+#include <array>
 #include <map>
+#include <sstream>
 
 #include "glm/fwd.hpp"
 #include "glm/geometric.hpp"
