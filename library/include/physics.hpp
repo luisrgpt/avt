@@ -1,5 +1,9 @@
+/////////////////////////////////////////////////////////////////////// HEADER GUARDS
 #pragma once
+#ifndef PHYSICS
+#define PHYSICS
 
+/////////////////////////////////////////////////////////////////////// DEPENDENCIES
 #include <boost/container/vector.hpp>
 #include <cassert>
 #include <cstdlib>
@@ -12,20 +16,12 @@
 #include <map>
 #include <sstream>
 
-#include "glm/fwd.hpp"
-#include "glm/geometric.hpp"
-#include "glm/detail/type_mat.hpp"
-#include "glm/detail/type_vec.hpp"
-#include "glm/detail/type_mat4x4.hpp"
-#include "glm/detail/type_vec3.hpp"
-#include "glm/gtc/matrix_transform.hpp"
-#include "glm/gtc/quaternion.hpp"
-#include "glm/gtc/type_ptr.hpp"
+#include "math/matrix_3d.hpp"
+#include "math/matrix_4d.hpp"
+#include "math/vector_3d.hpp"
+#include "math/quaternion.hpp"
 
-#define GLM_ENABLE_EXPERIMENTAL
-#include "glm/gtx/matrix_transform_2d.hpp"
-#include "glm/gtx/transform.hpp"
-
+/////////////////////////////////////////////////////////////////////// NAMESPACE
 namespace gl {
   enum behaviour {
     linear,
@@ -37,18 +33,18 @@ namespace gl {
   class object {
   public:
     // Static data
-    glm::vec3 position;
-    glm::quat orientation;
+    math::vector_3d position;
+    math::quaternion orientation;
 
     // Kinematic data
-    glm::vec3 velocity;
-    glm::quat rotation;
+    math::vector_3d velocity;
+    math::quaternion rotation;
 
     object(
-      glm::vec3,
-      glm::quat,
-      glm::vec3,
-      glm::quat
+      math::vector_3d,
+      math::quaternion,
+      math::vector_3d,
+      math::quaternion
     );
 
     void execute(kinematic_movement);
@@ -58,36 +54,36 @@ namespace gl {
 
   class kinematic_movement {
   private:
-    glm::vec3 linear;
-    glm::quat angular;
+    math::vector_3d linear;
+    math::quaternion angular;
     float duration;
     float max_speed;
 
   public:
-    kinematic_movement(glm::vec3, glm::quat, float, float);
+    kinematic_movement(math::vector_3d, math::quaternion, float, float);
     friend void object::execute(kinematic_movement);
   };
 
   //class dynamic_movement {
   //private:
-  //  glm::vec3 linear;
-  //  glm::quat angular;
+  //  math::vector_3d linear;
+  //  math::quaternion angular;
   //  float duration;
   //  float max_speed;
   //  float max_acceleration;
 
   //public:
-  //  dynamic_movement(glm::vec3, glm::quat, float, float, float);
+  //  dynamic_movement(math::vector_3d, math::quaternion, float, float, float);
   //  friend void object::execute(dynamic_movement);
   //};
 
   class linear_movement : public kinematic_movement {
   public:
-    linear_movement(glm::vec3, float);
+    linear_movement(math::vector_3d, float);
   };
   class rotation : public kinematic_movement {
   public:
-    rotation(glm::quat, float);
+    rotation(math::quaternion, float);
   };
   //class kinematic_seek : public kinematic_movement {
   //public:
@@ -97,3 +93,5 @@ namespace gl {
   //  dynamic_seek(object, float, float, float);
   //};
 }
+
+#endif

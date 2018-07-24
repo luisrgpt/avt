@@ -1,4 +1,4 @@
-#include <gl/graphics.hpp>
+#include <graphics.hpp>
 
 #include <assimp/Importer.hpp>
 #include <assimp/mesh.h>
@@ -11,21 +11,38 @@ using namespace gl;
 
 model::model(
   scene scene,
-  glm::vec3 scale,
-  glm::vec3 position,
-  glm::quat orientation,
-  glm::vec3 velocity,
-  glm::quat rotation)
+  math::vector_3d scale,
+  math::vector_3d position,
+  math::quaternion orientation,
+  math::vector_3d velocity,
+  math::quaternion rotation)
   : scene_info(scene)
   , object(position, orientation, velocity, rotation)
-  , scale(glm::scale(scale)) {}
+  , scale(math::matrix_4d::Scaling(scale.x, scale.y, scale.z, 1.0f)) {
+  //std::cout << "quat: " << std::endl;
+  //std::cout << this->object.orientation.x << " " << this->object.orientation.y << " " << this->object.orientation.z << " " << this->object.orientation.w << " " << std::endl;
+  //std::cout << std::endl;
+  //std::cout << "scale: " << std::endl;
+  //std::cout << this->scale[0][0] << " " << this->scale[0][1] << " " << this->scale[0][2] << " " << this->scale[0][3] << " " << std::endl;
+  //std::cout << this->scale[1][0] << " " << this->scale[1][1] << " " << this->scale[1][2] << " " << this->scale[1][3] << " " << std::endl;
+  //std::cout << this->scale[2][0] << " " << this->scale[2][1] << " " << this->scale[2][2] << " " << this->scale[2][3] << " " << std::endl;
+  //std::cout << this->scale[3][0] << " " << this->scale[3][1] << " " << this->scale[3][2] << " " << this->scale[3][3] << " " << std::endl;
+  //std::cout << std::endl;
+}
 view::view(
-  glm::vec3 position,
-  glm::quat orientation,
-  glm::vec3 velocity,
-  glm::quat rotation)
+  math::vector_3d position,
+  math::quaternion orientation,
+  math::vector_3d velocity,
+  math::quaternion rotation)
   : object(position, orientation, velocity, rotation)
-  , matrix(glm::lookAt(position, orientation * glm::vec3(0.0f, 0.0f, 1.0f), orientation * glm::vec3(0.0f, 1.0f, 0.0f))) {}
+  , matrix(math::matrix_4d::View(position, orientation * math::vector_3d(0.0f, 0.0f, 1.0f), orientation * math::vector_3d(0.0f, 1.0f, 0.0f))) {
+  //std::cout << "lookat: " << std::endl;
+  //std::cout << this->matrix[0][0] << " " << this->matrix[0][1] << " " << this->matrix[0][2] << " " << this->matrix[0][3] << " " << std::endl;
+  //std::cout << this->matrix[1][0] << " " << this->matrix[1][1] << " " << this->matrix[1][2] << " " << this->matrix[1][3] << " " << std::endl;
+  //std::cout << this->matrix[2][0] << " " << this->matrix[2][1] << " " << this->matrix[2][2] << " " << this->matrix[2][3] << " " << std::endl;
+  //std::cout << this->matrix[3][0] << " " << this->matrix[3][1] << " " << this->matrix[3][2] << " " << this->matrix[3][3] << " " << std::endl;
+  //std::cout << std::endl;
+}
 projection::projection(
   projection_type type,
   float left,
@@ -34,7 +51,7 @@ projection::projection(
   float top,
   float z_near,
   float z_far,
-  glm::mat4 matrix)
+  math::matrix_4d matrix)
   : type(type)
   , left(left)
   , right(right)
@@ -48,13 +65,27 @@ orthogonal_projection::orthogonal_projection(
   float left, float right,
   float bottom, float top,
   float z_near, float z_far)
-  : projection(orthogonal, left, right, bottom, top, z_near, z_far, glm::ortho(left * width/height, right * width/height, bottom, top, z_near, z_far)) {}
+  : projection(orthogonal, left, right, bottom, top, z_near, z_far, math::matrix_4d::OrthographicProjection(left * width/height, right * width/height, bottom, top, z_near, z_far)) {
+  //std::cout << "orthogonal: " << std::endl;
+  //std::cout << this->matrix[0][0] << " " << this->matrix[0][1] << " " << this->matrix[0][2] << " " << this->matrix[0][3] << " " << std::endl;
+  //std::cout << this->matrix[1][0] << " " << this->matrix[1][1] << " " << this->matrix[1][2] << " " << this->matrix[1][3] << " " << std::endl;
+  //std::cout << this->matrix[2][0] << " " << this->matrix[2][1] << " " << this->matrix[2][2] << " " << this->matrix[2][3] << " " << std::endl;
+  //std::cout << this->matrix[3][0] << " " << this->matrix[3][1] << " " << this->matrix[3][2] << " " << this->matrix[3][3] << " " << std::endl;
+  //std::cout << std::endl;
+}
 perspective_projection::perspective_projection(
   float width, float height,
   float left, float right,
   float bottom, float top,
   float z_near, float z_far)
-  : projection(perspective, left, right, bottom, top, z_near, z_far, glm::frustum(left * width/height, right * width/height, bottom, top, z_near, z_far)) {}
+  : projection(perspective, left, right, bottom, top, z_near, z_far, math::matrix_4d::Frustum(left * width/height, right * width/height, bottom, top, z_near, z_far)) {
+  //std::cout << "frustum: " << std::endl;
+  //std::cout << this->matrix[0][0] << " " << this->matrix[0][1] << " " << this->matrix[0][2] << " " << this->matrix[0][3] << " " << std::endl;
+  //std::cout << this->matrix[1][0] << " " << this->matrix[1][1] << " " << this->matrix[1][2] << " " << this->matrix[1][3] << " " << std::endl;
+  //std::cout << this->matrix[2][0] << " " << this->matrix[2][1] << " " << this->matrix[2][2] << " " << this->matrix[2][3] << " " << std::endl;
+  //std::cout << this->matrix[3][0] << " " << this->matrix[3][1] << " " << this->matrix[3][2] << " " << this->matrix[3][3] << " " << std::endl;
+  //std::cout << std::endl;
+}
 template<class type>
 graph<type>::graph()
   : root(node{ 0u })
@@ -72,6 +103,7 @@ engine::engine(
   , program_ids(boost::container::vector<bool>())
   , shader_ids(std::vector<std::map<shader_type, unsigned>>())
   , mesh_ids(boost::container::vector<bool>())
+  , vbo_ids(std::vector<std::vector<unsigned>>())
   , current_mesh_id(0)
   , width(width)
   , height(height) {
@@ -79,6 +111,7 @@ engine::engine(
   this->program_ids.push_back(false);
   this->shader_ids.push_back(std::map<shader_type, unsigned>());
   this->mesh_ids.push_back(false);
+  this->vbo_ids.push_back(std::vector<unsigned>());
 
   // Setup GLUT
   glutInit(argc, argv);
@@ -112,26 +145,54 @@ engine::engine(
   assert(glGetError() == GL_NO_ERROR);
 }
 
+engine::~engine() {
+  for (auto i = 0u; i < program_ids.size(); i++) {
+    if (program_ids[i]) {
+      program_ids[i] = false;
+      glDeleteProgram(i);
+      for (auto shader : this->shader_ids[i]) {
+        glDeleteShader(shader.second);
+      }
+    }
+  }
+  for (auto i = 0u; i < mesh_ids.size(); i++) {
+    if (mesh_ids[i]) {
+      mesh_ids[i] = false;
+      glBindVertexArray(i);
+      glDisableVertexAttribArray(0);
+      glDisableVertexAttribArray(1);
+      for (auto vbo_id : this->vbo_ids[i]) {
+        glDeleteBuffers(1, &vbo_id);
+      }
+      this->vbo_ids[i].clear();
+      glDeleteVertexArrays(1, &i);
+      glBindBuffer(GL_ARRAY_BUFFER, 0);
+      glBindVertexArray(0);
+    }
+  }
+  glutDestroyWindow(this->window_id);
+}
+
 void model::execute(kinematic_movement movement) {
   this->object.execute(movement);
 }
 void view::execute(kinematic_movement movement) {
   this->object.execute(movement);
-  this->matrix = glm::lookAt(this->object.position, this->object.position + this->object.orientation * glm::vec3(0.0f, 0.0f, -1.0f), this->object.orientation * glm::vec3(0.0f, 1.0f, 0.0f));
+  this->matrix = math::matrix_4d::View(this->object.position, this->object.position + this->object.orientation * math::vector_3d(0.0f, 0.0f, -1.0f), this->object.orientation * math::vector_3d(0.0f, 1.0f, 0.0f));
 }
 void projection::reshape(float width, float height) {
   glViewport(0, 0, width, height);
 
   float ratio = width / height;
   if (this->type == perspective) {
-    this->matrix = glm::frustum(
+    this->matrix = math::matrix_4d::Frustum(
       this->left * ratio, this->right * ratio,
       this->bottom, this->top,
       this->z_near, this->z_far
     );
   }
   else {
-    this->matrix = glm::ortho(
+    this->matrix = math::matrix_4d::OrthographicProjection(
       this->left * ratio, this->right * ratio,
       this->bottom, this->top,
       this->z_near, this->z_far
@@ -407,11 +468,14 @@ scene* engine::load_scene(program program, std::string filename) {
     // generate Vertex Array for mesh
     glGenVertexArrays(1,&id);
     glBindVertexArray(id);
+    this->vbo_ids.push_back(std::vector<unsigned>());
+    
     assert(glGetError() == GL_NO_ERROR);
  
     // buffer for vertex positions
     if (vertices[n].size() > 0) {
       glGenBuffers(1, &buffer);
+      this->vbo_ids[id].push_back(buffer);
       glBindBuffer(GL_ARRAY_BUFFER, buffer);
       glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices[n].size(), vertices[n].data(), GL_STATIC_DRAW);
       glEnableVertexAttribArray(0);
@@ -421,8 +485,8 @@ scene* engine::load_scene(program program, std::string filename) {
  
     // buffer for vertex normals
     if (normals[n].size() > 0) {
-      std::cout << normals[n].size() / 3.0f << std::endl;
       glGenBuffers(1, &buffer);
+      this->vbo_ids[id].push_back(buffer);
       glBindBuffer(GL_ARRAY_BUFFER, buffer);
       glBufferData(GL_ARRAY_BUFFER, sizeof(float) * normals[n].size(), normals[n].data(), GL_STATIC_DRAW);
       glEnableVertexAttribArray(1);
@@ -433,6 +497,7 @@ scene* engine::load_scene(program program, std::string filename) {
     // buffer for vertex texture coordinates
     if (tex_coords[n].size() > 0) {
       glGenBuffers(1, &buffer);
+      this->vbo_ids[id].push_back(buffer);
       glBindBuffer(GL_ARRAY_BUFFER, buffer);
       glBufferData(GL_ARRAY_BUFFER, sizeof(float) * tex_coords[n].size(), tex_coords[n].data(), GL_STATIC_DRAW);
       glEnableVertexAttribArray(2);
@@ -549,8 +614,14 @@ void engine::bind(mesh scene) {
   this->current_mesh_id = scene.id;
 }
 
-void engine::set_uniform(uniform uniform, glm::mat4 buffer) {
-  glUniformMatrix4fv(uniform.id, 1, GL_FALSE, glm::value_ptr(buffer));
+void engine::set_uniform(uniform uniform, math::matrix_4d buffer) {
+  //std::cout << "wrong final: " << std::endl;
+  //std::cout << buffer[0][0] << " " << buffer[0][1] << " " << buffer[0][2] << " " << buffer[0][3] << " " << std::endl;
+  //std::cout << buffer[1][0] << " " << buffer[1][1] << " " << buffer[1][2] << " " << buffer[1][3] << " " << std::endl;
+  //std::cout << buffer[2][0] << " " << buffer[2][1] << " " << buffer[2][2] << " " << buffer[2][3] << " " << std::endl;
+  //std::cout << buffer[3][0] << " " << buffer[3][1] << " " << buffer[3][2] << " " << buffer[3][3] << " " << std::endl;
+  //std::cout << std::endl;
+  glUniformMatrix4fv(uniform.id, 1, GL_FALSE, buffer.values.data());
 }
 //program& program::operator+=(uniform<int, 1, 1> buffer) {
 //  glUniform1iv(buffer.id, 1, &buffer.data);
@@ -642,19 +713,19 @@ void engine::draw(
   graph<model> scene_graph,
   camera camera
 ) {
-  std::vector<glm::mat4> translations;
-  std::vector<glm::mat4> rotations;
-  std::vector<glm::mat4> scalations;
+  std::vector<math::matrix_4d> translations;
+  std::vector<math::matrix_4d> rotations;
+  std::vector<math::matrix_4d> scalations;
 
-  glm::mat4 projection;
-  glm::mat4 view;
-  glm::mat4 translation;
-  glm::mat4 rotation;
-  glm::mat4 scalation;
+  math::matrix_4d projection = math::matrix_4d::kIdentity;
+  math::matrix_4d view = math::matrix_4d::kIdentity;
+  math::matrix_4d translation = math::matrix_4d::kIdentity;
+  math::matrix_4d rotation = math::matrix_4d::kIdentity;
+  math::matrix_4d scalation = math::matrix_4d::kIdentity;
 
-  translations.push_back(glm::mat4(1.0f));
-  rotations.push_back(glm::mat4(1.0f));
-  scalations.push_back(glm::mat4(1.0f));
+  translations.push_back(math::matrix_4d::kIdentity);
+  rotations.push_back(math::matrix_4d::kIdentity);
+  scalations.push_back(math::matrix_4d::kIdentity);
 
   projection = camera.projection.matrix;
   view = camera.view.matrix;
@@ -665,9 +736,33 @@ void engine::draw(
     auto model = scene_graph.nodes[i];
     auto parent_id = scene_graph.edges[i].id;
 
-    translation = glm::translate(model.object.position) * translations[parent_id];
-    rotation = glm::mat4_cast(model.object.orientation) * rotations[parent_id];
+    translation = math::matrix_3d::Translation(model.object.position.x, model.object.position.y, model.object.position.z) * translations[parent_id];
+    rotation = math::matrix_4d(model.object.orientation) * rotations[parent_id];
     scalation = model.scale * scalations[parent_id];
+
+    math::matrix_4d buffer = math::matrix_4d(model.object.orientation);
+    //std::cout << "rotation: " << std::endl;
+    //std::cout << buffer[0][0] << " " << buffer[0][1] << " " << buffer[0][2] << " " << buffer[0][3] << " " << std::endl;
+    //std::cout << buffer[1][0] << " " << buffer[1][1] << " " << buffer[1][2] << " " << buffer[1][3] << " " << std::endl;
+    //std::cout << buffer[2][0] << " " << buffer[2][1] << " " << buffer[2][2] << " " << buffer[2][3] << " " << std::endl;
+    //std::cout << buffer[3][0] << " " << buffer[3][1] << " " << buffer[3][2] << " " << buffer[3][3] << " " << std::endl;
+    //std::cout << std::endl;
+
+    buffer = math::matrix_3d::Translation(model.object.position.x, model.object.position.y, model.object.position.z);
+    //std::cout << "translation: " << std::endl;
+    //std::cout << buffer[0][0] << " " << buffer[0][1] << " " << buffer[0][2] << " " << buffer[0][3] << " " << std::endl;
+    //std::cout << buffer[1][0] << " " << buffer[1][1] << " " << buffer[1][2] << " " << buffer[1][3] << " " << std::endl;
+    //std::cout << buffer[2][0] << " " << buffer[2][1] << " " << buffer[2][2] << " " << buffer[2][3] << " " << std::endl;
+    //std::cout << buffer[3][0] << " " << buffer[3][1] << " " << buffer[3][2] << " " << buffer[3][3] << " " << std::endl;
+    //std::cout << std::endl;
+
+    buffer = math::matrix_3d::Translation(model.object.position.x, model.object.position.y, model.object.position.z) * translations[parent_id];
+    //std::cout << "multiplication: " << std::endl;
+    //std::cout << buffer[0][0] << " " << buffer[0][1] << " " << buffer[0][2] << " " << buffer[0][3] << " " << std::endl;
+    //std::cout << buffer[1][0] << " " << buffer[1][1] << " " << buffer[1][2] << " " << buffer[1][3] << " " << std::endl;
+    //std::cout << buffer[2][0] << " " << buffer[2][1] << " " << buffer[2][2] << " " << buffer[2][3] << " " << std::endl;
+    //std::cout << buffer[3][0] << " " << buffer[3][1] << " " << buffer[3][2] << " " << buffer[3][3] << " " << std::endl;
+    //std::cout << std::endl;
 
     for (auto mesh : model.scene_info) {
       if (this->current_program_id != mesh.program_id) {

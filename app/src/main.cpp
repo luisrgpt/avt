@@ -1,4 +1,6 @@
-﻿#include <gl/graphics.hpp>
+﻿#include <graphics.hpp>
+#include <math/quaternion.hpp>
+#include <math/vector_3d.hpp>
 #include <iostream>
 #include <functional>
 
@@ -21,7 +23,7 @@ unsigned current_camera;
 void close() {}
 void idle() {}
 void keyboard(unsigned char key, int x, int y) {
-//    glm::vec3 current_position = state_position;
+//    math::vector_3d current_position = state_position;
     switch (key) {
       case '1':
         current_camera = 0;
@@ -34,63 +36,66 @@ void keyboard(unsigned char key, int x, int y) {
       //  break;
       case 'a':
         for (auto &camera : cameras) {
-          camera.view.execute(gl::linear_movement(camera.view.object.orientation * glm::vec3(-1.0f, 0.0f, 0.0f), 1));
+          camera.view.execute(gl::linear_movement(camera.view.object.orientation * math::vector_3d(-1.0f, 0.0f, 0.0f), 1));
         }
         break;
       case 'd':
         for (auto &camera : cameras) {
-          camera.view.execute(gl::linear_movement(camera.view.object.orientation * glm::vec3(1.0f, 0.0f, 0.0f), 1));
+          camera.view.execute(gl::linear_movement(camera.view.object.orientation * math::vector_3d(1.0f, 0.0f, 0.0f), 1));
         }
         break;
       case 's':
         for (auto &camera : cameras) {
-          camera.view.execute(gl::linear_movement(camera.view.object.orientation * glm::vec3(0.0f, -1.0f, 0.0f), 1));
+          camera.view.execute(gl::linear_movement(camera.view.object.orientation * math::vector_3d(0.0f, -1.0f, 0.0f), 1));
         }
         break;
       case 'w':
         for (auto &camera : cameras) {
-          camera.view.execute(gl::linear_movement(camera.view.object.orientation * glm::vec3(0.0f, 1.0f, 0.0f), 1));
+          camera.view.execute(gl::linear_movement(camera.view.object.orientation * math::vector_3d(0.0f, 1.0f, 0.0f), 1));
         }
         break;
       case 'q':
         for (auto &camera : cameras) {
-          camera.view.execute(gl::linear_movement(camera.view.object.orientation * glm::vec3(0.0f, 0.0f, -1.0f), 1));
+          camera.view.execute(gl::linear_movement(camera.view.object.orientation * math::vector_3d(0.0f, 0.0f, -1.0f), 1));
         }
         break;
       case 'e':
         for (auto &camera : cameras) {
-          camera.view.execute(gl::linear_movement(camera.view.object.orientation * glm::vec3(0.0f, 0.0f, 1.0f), 1));
+          camera.view.execute(gl::linear_movement(camera.view.object.orientation * math::vector_3d(0.0f, 0.0f, 1.0f), 1));
         }
         break;
       case 'j':
         for (auto &camera : cameras) {
-          camera.view.execute(gl::rotation(glm::angleAxis(0.02f, camera.view.object.orientation * glm::vec3(0.0f, 1.0f, 0.0f)), 1));
+          camera.view.execute(gl::rotation(math::quaternion(0.02f, camera.view.object.orientation * math::vector_3d(0.0f, 1.0f, 0.0f)), 1));
         }
         break;
       case 'l':
         for (auto &camera : cameras) {
-          camera.view.execute(gl::rotation(glm::angleAxis(0.02f, camera.view.object.orientation * glm::vec3(0.0f, -1.0f, 0.0f)), 1));
+          camera.view.execute(gl::rotation(math::quaternion(0.02f, camera.view.object.orientation * math::vector_3d(0.0f, -1.0f, 0.0f)), 1));
         }
         break;
       case 'k':
         for (auto &camera : cameras) {
-          camera.view.execute(gl::rotation(glm::angleAxis(0.02f, camera.view.object.orientation * glm::vec3(-1.0f, 0.0f, 0.0f)), 1));
+          camera.view.execute(gl::rotation(math::quaternion(0.02f, camera.view.object.orientation * math::vector_3d(-1.0f, 0.0f, 0.0f)), 1));
         }
         break;
       case 'i':
         for (auto &camera : cameras) {
-          camera.view.execute(gl::rotation(glm::angleAxis(0.02f, camera.view.object.orientation * glm::vec3(1.0f, 0.0f, 0.0f)), 1));
+          camera.view.execute(gl::rotation(math::quaternion(0.02f, camera.view.object.orientation * math::vector_3d(1.0f, 0.0f, 0.0f)), 1));
         }
         break;
       case 'u':
         for (auto &camera : cameras) {
-          camera.view.execute(gl::rotation(glm::angleAxis(0.02f, camera.view.object.orientation * glm::vec3(0.0f, 0.0f, 1.0f)), 1));
+          camera.view.execute(gl::rotation(math::quaternion(0.02f, camera.view.object.orientation * math::vector_3d(0.0f, 0.0f, 1.0f)), 1));
         }
         break;
       case 'o':
         for (auto &camera : cameras) {
-          camera.view.execute(gl::rotation(glm::angleAxis(0.02f, camera.view.object.orientation * glm::vec3(0.0f, 0.0f, -1.0f)), 1));
+          camera.view.execute(gl::rotation(math::quaternion(0.02f, camera.view.object.orientation * math::vector_3d(0.0f, 0.0f, -1.0f)), 1));
         }
+        break;
+      case 'x':
+        delete engine;
         break;
     }
 }
@@ -98,9 +103,9 @@ void motion(int x, int y) {
 //    if (state_mouse_motion) {
 //      std::cout << (x - state_x) / ((float)window.width) << ":" << (y - state_y) / ((float)window.height) << std::endl;
 //
-//      glm::vec3 state_right = glm::normalize(glm::rotate(state_right, (y - state_y) / ((float) window.height), state_up));
-//      glm::vec3 state_front = glm::normalize(glm::rotate(glm::normalize(glm::rotate(state_front, (x - state_x) / ((float)window.width), state_up)), state_eye_y, state_right));
-//      glm::vec3 state_up = glm::normalize(glm::cross(state_right, state_front));
+//      math::vector_3d state_right = glm::normalize(glm::rotate(state_right, (y - state_y) / ((float) window.height), state_up));
+//      math::vector_3d state_front = glm::normalize(glm::rotate(glm::normalize(glm::rotate(state_front, (x - state_x) / ((float)window.width), state_up)), state_eye_y, state_right));
+//      math::vector_3d state_up = glm::normalize(glm::cross(state_right, state_front));
 //
 //      view = glm::lookAt(state_position, state_position + state_front, state_up);
 //    }
@@ -141,6 +146,7 @@ void display() {
     *scene_graph,
     cameras[current_camera]
   );
+  //std::cout << std::endl;
 }
 int cnt = 0;
 void timer(int value) {
@@ -185,33 +191,33 @@ int main(int argc, char **argv) {
   auto front = scene_graph->set_root(
     gl::model(
       *scene,
-      glm::vec3(10, 10, 10),
-      glm::vec3(0, 0, 0), glm::angleAxis(0.2f, glm::vec3(0.0f, 1.0f, 0.0f)),
-      glm::vec3(0, 0, 0), glm::quat(0, 0, 0, 0)
+      math::vector_3d(10, 10, 10),
+      math::vector_3d(0, 0, 0), math::quaternion(0.2f, math::vector_3d(0.0f, 1.0f, 0.0f)),
+      math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
     )
   );
   scene_graph->set_root(
     gl::model(
       *scene,
-      glm::vec3(10, 10, 10),
-      glm::vec3(20, 0, 20), glm::quat(0, 0, 0, 0),
-      glm::vec3(0, 0, 0), glm::quat(0, 0, 0, 0)
+      math::vector_3d(10, 10, 10),
+      math::vector_3d(20, 0, 20), math::quaternion(0.0f, math::vector_3d(0.0f, 1.0f, 0.0f)),
+      math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
     )
   );
   scene_graph->set_child(
     *front,
     gl::model(
       *scene,
-      glm::vec3(1, 1, 1),
-      glm::vec3(0, 10, 0), glm::angleAxis(0.2f, glm::vec3(0.0f, 1.0f, 0.0f)),
-      glm::vec3(0, 0, 0), glm::quat(0, 0, 0, 0)
+      math::vector_3d(1, 1, 1),
+      math::vector_3d(0, 10, 0), math::quaternion(0.2f, math::vector_3d(0.0f, 1.0f, 0.0f)),
+      math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
     )
   );
   cameras = {
     gl::camera{
     gl::view(
-      glm::vec3(0, 0, 50), glm::angleAxis(0.0f, glm::vec3(0.0f, 1.0f, 0.0f)),
-      glm::vec3(0, 0, 0), glm::quat(0, 0, 0, 0)
+      math::vector_3d(0, 0, 50), math::quaternion(0.0f, math::vector_3d(0.0f, 1.0f, 0.0f)),
+      math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
     ),
     gl::perspective_projection(
       width, height,
@@ -222,8 +228,8 @@ int main(int argc, char **argv) {
   },
     gl::camera{
     gl::view(
-      glm::vec3(0, 0, 50), glm::angleAxis(0.0f, glm::vec3(0.0f, 1.0f, 0.0f)),
-      glm::vec3(0, 0, 0), glm::quat(0, 0, 0, 0)
+      math::vector_3d(0, 0, 50), math::quaternion(0.0f, math::vector_3d(0.0f, 1.0f, 0.0f)),
+      math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
     ),
     gl::orthogonal_projection(
       width, height,

@@ -129,11 +129,27 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="include\gl\graphics.hpp" />
-    <ClInclude Include="include\gl\physics.hpp" />
+    <ClInclude Include="include\graphics.hpp" />
+    <ClInclude Include="include\math\matrix_2d.hpp" />
+    <ClInclude Include="include\math\matrix_3d.hpp" />
+    <ClInclude Include="include\math\matrix_4d.hpp" />
+    <ClInclude Include="include\math\matrix_5d.hpp" />
+    <ClInclude Include="include\math\quaternion.hpp" />
+    <ClInclude Include="include\math\vector_2d.hpp" />
+    <ClInclude Include="include\math\vector_3d.hpp" />
+    <ClInclude Include="include\math\vector_4d.hpp" />
+    <ClInclude Include="include\physics.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\graphics.cpp" />
+    <ClCompile Include="src\math\matrix_2d.cpp" />
+    <ClCompile Include="src\math\matrix_3d.cpp" />
+    <ClCompile Include="src\math\matrix_4d.cpp" />
+    <ClCompile Include="src\math\matrix_5d.cpp" />
+    <ClCompile Include="src\math\quaternion.cpp" />
+    <ClCompile Include="src\math\vector_2d.cpp" />
+    <ClCompile Include="src\math\vector_3d.cpp" />
+    <ClCompile Include="src\math\vector_4d.cpp" />
     <ClCompile Include="src\physics.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

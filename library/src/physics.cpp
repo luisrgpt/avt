@@ -1,11 +1,11 @@
-#include <gl/physics.hpp>
+#include <physics.hpp>
 #include <iostream>
 
 using namespace gl;
 
 kinematic_movement::kinematic_movement(
-  glm::vec3 linear,
-  glm::quat angular,
+  math::vector_3d linear,
+  math::quaternion angular,
   float duration,
   float max_speed)
   : linear(linear)
@@ -14,18 +14,18 @@ kinematic_movement::kinematic_movement(
   , max_speed(max_speed) {}
 
 linear_movement::linear_movement(
-  glm::vec3 linear,
+  math::vector_3d linear,
   float duration)
-  : kinematic_movement(linear, glm::angleAxis(0.0f, glm::vec3(0.0f, 1.0f, 0.0f)), duration, 10000) {}
+  : kinematic_movement(linear, math::quaternion(0.0f, math::vector_3d(0.0f, 1.0f, 0.0f)), duration, 10000) {}
 rotation::rotation(
-  glm::quat angular,
+  math::quaternion angular,
   float duration)
-  : kinematic_movement(glm::vec3(), angular, duration, 10000) {}
+  : kinematic_movement(math::vector_3d(), angular, duration, 10000) {}
 //kinematic_seek::kinematic_seek(
 //  object target,
 //  float duration,
 //  float max_speed)
-//  : angular(glm::quat())
+//  : angular(math::quaternion())
 //  , duration(duration)
 //  , max_speed(max_speed) {
 //  this->linear = target.position - this->linear;
@@ -41,7 +41,7 @@ rotation::rotation(
 //  float duration,
 //  float max_speed,
 //  float max_acceleration)
-//  : angular(glm::quat())
+//  : angular(math::quaternion())
 //  , duration(duration)
 //  , max_speed(max_speed)
 //  , max_acceleration(max_acceleration) {
@@ -54,10 +54,10 @@ rotation::rotation(
 //  }
 //}
 object::object(
-  glm::vec3 position,
-  glm::quat orientation,
-  glm::vec3 velocity,
-  glm::quat rotation)
+  math::vector_3d position,
+  math::quaternion orientation,
+  math::vector_3d velocity,
+  math::quaternion rotation)
   : position(position)
   , orientation(orientation)
   , velocity(velocity)

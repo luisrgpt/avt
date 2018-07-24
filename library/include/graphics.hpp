@@ -1,7 +1,12 @@
+/////////////////////////////////////////////////////////////////////// HEADER GUARDS
 #pragma once
+#ifndef GRAPHICS
+#define GRAPHICS
 
+/////////////////////////////////////////////////////////////////////// DEPENDENCIES
 #include "physics.hpp"
 
+/////////////////////////////////////////////////////////////////////// NAMESPACE
 namespace gl {
   enum shader_type {
     compute,
@@ -49,20 +54,13 @@ namespace gl {
   };
   typedef std::vector<mesh> scene;
 
-  //template struct shader<compute>;
-  //template struct shader<vertex>;
-  //template struct shader<geometry>;
-  //template struct shader<tess_control>;
-  //template struct shader<tess_evaluation>;
-  //template struct shader<fragment>;
-
   class model {
   public:
     scene scene_info;
     object object;
-    glm::mat4 scale;
+    math::matrix_4d scale;
 
-    model(scene, glm::vec3, glm::vec3, glm::quat, glm::vec3, glm::quat);
+    model(scene, math::vector_3d, math::vector_3d, math::quaternion, math::vector_3d, math::quaternion);
 
     void execute(kinematic_movement);
     //void execute(dynamic_movement);
@@ -70,9 +68,9 @@ namespace gl {
   class view {
   public:
     object object;
-    glm::mat4 matrix;
+    math::matrix_4d matrix;
 
-    view(glm::vec3, glm::quat, glm::vec3, glm::quat);
+    view(math::vector_3d, math::quaternion, math::vector_3d, math::quaternion);
 
     void execute(kinematic_movement);
     //void execute(dynamic_movement);
@@ -88,10 +86,10 @@ namespace gl {
     float z_far;
 
   protected:
-    projection(projection_type, float, float, float, float, float, float, glm::mat4);
+    projection(projection_type, float, float, float, float, float, float, math::matrix_4d);
 
   public:
-    glm::mat4 matrix;
+    math::matrix_4d matrix;
 
     void reshape(float, float);
   };
@@ -132,6 +130,7 @@ namespace gl {
     boost::container::vector<bool> program_ids;
     std::vector<std::map<shader_type, unsigned>> shader_ids;
     boost::container::vector<bool> mesh_ids;
+    std::vector<std::vector<unsigned>> vbo_ids;
     unsigned current_mesh_id;
     unsigned current_program_id;
     float width, height;
@@ -139,6 +138,7 @@ namespace gl {
 
   public:
     engine(int*, char**, std::string, unsigned, unsigned);
+    ~engine();
 
     void set_close_callback(void(*)(void));
     void set_display_callback(void(*)(void));
@@ -166,15 +166,14 @@ namespace gl {
     void use(program);
     void bind(mesh);
 
-    void set_uniform(uniform, glm::mat4);
+    void set_uniform(uniform, math::matrix_4d);
 
     void draw(mesh);
     void draw(uniform, graph<model>, camera);
 
     void unbind();
     void unuse();
-
-    //void unload_shader(program, std::string);
-    //void destroy_program();
   };
 }
+
+#endif
