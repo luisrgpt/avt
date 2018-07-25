@@ -76,11 +76,9 @@ namespace gl {
     //void execute(dynamic_movement);
   };
   class free_view {
-  private:
+  public:
     math::vector_3d position;
     math::vector_3d euler_angle;
-
-  public:
     math::matrix_4d matrix;
 
     free_view(math::vector_3d, math::vector_3d);

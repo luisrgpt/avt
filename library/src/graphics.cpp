@@ -415,11 +415,22 @@ scene* engine::load_scene(program program, std::string filename) {
   if constexpr (type == obj) {
     std::ifstream ifile(filename);
     std::string line;
+    std::string token;
+    std::deque<std::string> tokens;
+    std::string prefix;
     while (std::getline(ifile, line)) {
       auto sin = std::stringstream(line);
       std::string s;
-      sin >> s;
-      if (s.compare("o") == 0) {
+      tokens.clear();
+      while (std::getline(sin, token, ' ')) {
+        tokens.push_back(token);
+      }
+      if (tokens.size() == 0) {
+        continue;
+      }
+      prefix = tokens.front();
+      tokens.pop_front();
+      if (prefix.compare("o") == 0) {
         if (mesh_counter >= 0) {
           for (auto i = 0u; i < vertices_idx[mesh_counter].size(); i++) {
             unsigned vi = vertices_idx[mesh_counter][i];
@@ -440,45 +451,78 @@ scene* engine::load_scene(program program, std::string filename) {
           }
         }
         mesh_counter += 1;
-        x_vertices.clear();
-        x_normals.clear();
-        x_tex_coords.clear();
         vertices.push_back(std::vector<float>());
         normals.push_back(std::vector<float>());
         tex_coords.push_back(std::vector<float>());
         vertices_idx.push_back(std::vector<unsigned>());
         tex_coords_idx.push_back(std::vector<unsigned>());
         normals_idx.push_back(std::vector<unsigned>());
-      } else if (mesh_counter < 0) {
+      }
+      else if (mesh_counter < 0) {
         continue;
-      } else if (s.compare("v") == 0) {
-        for (auto i = 0u; i < 3u; i++) {
-          sin >> f;
-          x_vertices.push_back(f);
+      }
+      else if (prefix.compare("v") == 0) {
+        for (auto token : tokens) {
+          x_vertices.push_back(std::stof(token));
         }
       }
-      else if (s.compare("vn") == 0) {
-        for (auto i = 0u; i < 3u; i++) {
-          sin >> f;
-          x_normals.push_back(f);
+      else if (prefix.compare("vn") == 0) {
+        for (auto token : tokens) {
+          x_normals.push_back(std::stof(token));
         }
       }
-      else if (s.compare("vt") == 0) {
-        for (auto i = 0u; i < 2u; i++) {
-          sin >> f;
-          x_tex_coords.push_back(f);
+      else if (prefix.compare("vt") == 0) {
+        for (auto token : tokens) {
+          x_tex_coords.push_back(std::stof(token));
         }
       }
-      else if (s.compare("f") == 0) {
-        std::string token;
-        for (auto i = 0u; i < 3u; i++) {
-          std::getline(sin, token, '/');
+      else if (prefix.compare("f") == 0) {
+        if (tokens.size() == 3) {
+          for (auto i = 0u; i < 3u; i++) {
+            std::stringstream ss(tokens[i]);
+            std::getline(ss, token, '/');
+            if (token.size() > 0) vertices_idx[mesh_counter].push_back(std::stoi(token));
+            std::getline(ss, token, '/');
+            if (token.size() > 0) tex_coords_idx[mesh_counter].push_back(std::stoi(token));
+            std::getline(ss, token, ' ');
+            if (token.size() > 0) normals_idx[mesh_counter].push_back(std::stoi(token));
+          };
+        }
+        else if (tokens.size() == 4) {
+          for (auto i = 0u; i < 3u; i++) {
+            std::stringstream ss(tokens[i]);
+            std::getline(ss, token, '/');
+            if (token.size() > 0) vertices_idx[mesh_counter].push_back(std::stoi(token));
+            std::getline(ss, token, '/');
+            if (token.size() > 0) tex_coords_idx[mesh_counter].push_back(std::stoi(token));
+            std::getline(ss, token, ' ');
+            if (token.size() > 0) normals_idx[mesh_counter].push_back(std::stoi(token));
+          };
+
+          std::stringstream ss(tokens[2]);
+          std::getline(ss, token, '/');
           if (token.size() > 0) vertices_idx[mesh_counter].push_back(std::stoi(token));
-          std::getline(sin, token, '/');
+          std::getline(ss, token, '/');
           if (token.size() > 0) tex_coords_idx[mesh_counter].push_back(std::stoi(token));
-          std::getline(sin, token, ' ');
+          std::getline(ss, token, ' ');
           if (token.size() > 0) normals_idx[mesh_counter].push_back(std::stoi(token));
-        };
+
+          ss = std::stringstream(tokens[3]);
+          std::getline(ss, token, '/');
+          if (token.size() > 0) vertices_idx[mesh_counter].push_back(std::stoi(token));
+          std::getline(ss, token, '/');
+          if (token.size() > 0) tex_coords_idx[mesh_counter].push_back(std::stoi(token));
+          std::getline(ss, token, ' ');
+          if (token.size() > 0) normals_idx[mesh_counter].push_back(std::stoi(token));
+
+          ss = std::stringstream(tokens[0]);
+          std::getline(ss, token, '/');
+          if (token.size() > 0) vertices_idx[mesh_counter].push_back(std::stoi(token));
+          std::getline(ss, token, '/');
+          if (token.size() > 0) tex_coords_idx[mesh_counter].push_back(std::stoi(token));
+          std::getline(ss, token, ' ');
+          if (token.size() > 0) normals_idx[mesh_counter].push_back(std::stoi(token));
+        }
       }
     }
   }

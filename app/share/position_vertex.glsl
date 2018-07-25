@@ -10,5 +10,5 @@ out vec4 Color;
 void main(void)
 {
 	gl_Position = projection_view_model * vec4(position, 1.0);
-	Color = vec4(tex_coord, 0.0, 1.0);
+	Color = vec4(position, 1.0);
 }

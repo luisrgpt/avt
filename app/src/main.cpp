@@ -12,9 +12,6 @@ height = 480;
 
 gl::engine *engine;
 gl::program *program;
-gl::scene *square;
-gl::scene *triangle;
-gl::scene *paralellogram;
 gl::uniform *projection_view_model;
 gl::graph<gl::model> *scene_graph;
 std::vector<gl::camera> cameras;
@@ -51,7 +48,7 @@ void keyboard(unsigned char key, int x, int y) {
       camera.view.execute(gl::linear_movement(camera.view.object.orientation * math::vector_3d(-1.0f, 0.0f, 0.0f), 1));
     }
     for (auto &camera : free_cameras) {
-      camera.view.apply_velocity(math::vector_3d(-1.0f, 0.0f, 0.0f));
+      camera.view.apply_velocity(math::vector_3d(-1.0f, 0.0f, 0.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
     }
     break;
   case 'd':
@@ -59,7 +56,7 @@ void keyboard(unsigned char key, int x, int y) {
       camera.view.execute(gl::linear_movement(camera.view.object.orientation * math::vector_3d(1.0f, 0.0f, 0.0f), 1));
     }
     for (auto &camera : free_cameras) {
-      camera.view.apply_velocity(math::vector_3d(1.0f, 0.0f, 0.0f));
+      camera.view.apply_velocity(math::vector_3d(1.0f, 0.0f, 0.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
     }
     break;
   case 's':
@@ -67,7 +64,7 @@ void keyboard(unsigned char key, int x, int y) {
       camera.view.execute(gl::linear_movement(camera.view.object.orientation * math::vector_3d(0.0f, -1.0f, 0.0f), 1));
     }
     for (auto &camera : free_cameras) {
-      camera.view.apply_velocity(math::vector_3d(0.0f, -1.0f, 0.0f));
+      camera.view.apply_velocity(math::vector_3d(0.0f, -1.0f, 0.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
     }
     break;
   case 'w':
@@ -75,7 +72,7 @@ void keyboard(unsigned char key, int x, int y) {
       camera.view.execute(gl::linear_movement(camera.view.object.orientation * math::vector_3d(0.0f, 1.0f, 0.0f), 1));
     }
     for (auto &camera : free_cameras) {
-      camera.view.apply_velocity(math::vector_3d(0.0f, 1.0f, 0.0f));
+      camera.view.apply_velocity(math::vector_3d(0.0f, 1.0f, 0.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
     }
     break;
   case 'q':
@@ -83,7 +80,7 @@ void keyboard(unsigned char key, int x, int y) {
       camera.view.execute(gl::linear_movement(camera.view.object.orientation * math::vector_3d(0.0f, 0.0f, -1.0f), 1));
     }
     for (auto &camera : free_cameras) {
-      camera.view.apply_velocity(math::vector_3d(0.0f, 0.0f, -1.0f));
+      camera.view.apply_velocity(math::vector_3d(0.0f, 0.0f, -1.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
     }
     break;
   case 'e':
@@ -91,7 +88,7 @@ void keyboard(unsigned char key, int x, int y) {
       camera.view.execute(gl::linear_movement(camera.view.object.orientation * math::vector_3d(0.0f, 0.0f, 1.0f), 1));
     }
     for (auto &camera : free_cameras) {
-      camera.view.apply_velocity(math::vector_3d(0.0f, 0.0f, -1.0f));
+      camera.view.apply_velocity(math::vector_3d(0.0f, 0.0f, 1.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
     }
     break;
   case 'j':
@@ -99,7 +96,7 @@ void keyboard(unsigned char key, int x, int y) {
       camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(0.0f, 1.0f, 0.0f)), 1));
     }
     for (auto &camera : free_cameras) {
-      camera.view.apply_rotation(math::vector_3d(0.0f, 1.0f, 0.0f));
+      camera.view.apply_rotation(math::vector_3d(0.0f, 1.0f, 0.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
     }
     break;
   case 'l':
@@ -107,7 +104,7 @@ void keyboard(unsigned char key, int x, int y) {
       camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(0.0f, -1.0f, 0.0f)), 1));
     }
     for (auto &camera : free_cameras) {
-      camera.view.apply_rotation(math::vector_3d(0.0f, -1.0f, 0.0f));
+      camera.view.apply_rotation(math::vector_3d(0.0f, -1.0f, 0.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
     }
     break;
   case 'k':
@@ -115,7 +112,7 @@ void keyboard(unsigned char key, int x, int y) {
       camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(-1.0f, 0.0f, 0.0f)), 1));
     }
     for (auto &camera : free_cameras) {
-      camera.view.apply_rotation(math::vector_3d(-1.0f, 0.0f, 0.0f));
+      camera.view.apply_rotation(math::vector_3d(-1.0f, 0.0f, 0.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
     }
     break;
   case 'i':
@@ -123,7 +120,7 @@ void keyboard(unsigned char key, int x, int y) {
       camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(1.0f, 0.0f, 0.0f)), 1));
     }
     for (auto &camera : free_cameras) {
-      camera.view.apply_rotation(math::vector_3d(1.0f, 0.0f, 0.0f));
+      camera.view.apply_rotation(math::vector_3d(1.0f, 0.0f, 0.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
     }
     break;
   case 'u':
@@ -131,7 +128,7 @@ void keyboard(unsigned char key, int x, int y) {
       camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(0.0f, 0.0f, 1.0f)), 1));
     }
     for (auto &camera : free_cameras) {
-      camera.view.apply_rotation(math::vector_3d(0.0f, 0.0f, 1.0f));
+      camera.view.apply_rotation(math::vector_3d(0.0f, 0.0f, 1.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
     }
     break;
   case 'o':
@@ -139,7 +136,7 @@ void keyboard(unsigned char key, int x, int y) {
       camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(0.0f, 0.0f, -1.0f)), 1));
     }
     for (auto &camera : free_cameras) {
-      camera.view.apply_rotation(math::vector_3d(0.0f, 0.0f, -1.0f));
+      camera.view.apply_rotation(math::vector_3d(0.0f, 0.0f, -1.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
     }
     break;
   }
@@ -243,77 +240,84 @@ int main(int argc, char **argv) {
   engine->link(*program);
   projection_view_model = engine->get_uniform(*program, "projection_view_model");
 
-  square = engine->load_scene<gl::obj>(*program, "share/square.obj");
-  triangle = engine->load_scene<gl::obj>(*program, "share/triangle.obj");
-  paralellogram = engine->load_scene<gl::obj>(*program, "share/paralellogram.obj");
-
+  gl::scene *field = engine->load_scene<gl::obj>(*program, "share/field.obj");
+  gl::scene *ship = engine->load_scene<gl::obj>(*program, "share/ship.obj");
+  gl::scene *ball = engine->load_scene<gl::obj>(*program, "share/ball.obj");
+  gl::scene *box = engine->load_scene<gl::obj>(*program, "share/box.obj");
+  gl::scene *big_pipe = engine->load_scene<gl::obj>(*program, "share/big_pipe.obj");
+  gl::scene *border = engine->load_scene<gl::obj>(*program, "share/border.obj");
   scene_graph = new gl::graph<gl::model>();
-  auto triangle_2_1 = scene_graph->set_root(
+  scene_graph->set_root(
     gl::model(
-      *triangle,
-      math::vector_3d(20, 5, 20),
-      math::vector_3d(0, 0, 0), math::quaternion(45, math::vector_3d(0.0f, 1.0f, 0.0f)),
+      *field,
+      math::vector_3d(1, 1, 1),
+      math::vector_3d(13.5f, 14.5f, 0.0f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
       math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
     )
   );
-  auto triangle_2_2 = scene_graph->set_child(
-    *triangle_2_1,
+  scene_graph->set_root(
     gl::model(
-      *triangle,
-      math::vector_3d(1.0f, 0.5f, 1.0f),
-      math::vector_3d(0, 0, 0), math::quaternion(180, math::vector_3d(0.0f, 1.0f, 0.0f)),
+      *ship,
+      math::vector_3d(1, 1, 1),
+      math::vector_3d(13.5f, 2.5f, 1.0f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
       math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
     )
   );
-  auto square_1 = scene_graph->set_child(
-    *triangle_2_1,
+  scene_graph->set_root(
     gl::model(
-      *square,
-      math::vector_3d(0.5f, 0.7f, 0.5f),
-      math::vector_3d(-7.07107f * 2, 0.0f, -7.07107f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
+      *ball,
+      math::vector_3d(1, 1, 1),
+      math::vector_3d(13.5f, 3.5f, 1.0f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
       math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
     )
   );
-  auto triangle_1_1 = scene_graph->set_child(
-    *square_1,
+  for (auto i = 0u; i < 6u; i++) {
+    for (auto j = 0u; j < 13u; j++) {
+      scene_graph->set_root(
+        gl::model(
+          *box,
+          math::vector_3d(1, 1, 1),
+          math::vector_3d(2.0f + 1.9f * j, 18.45f + 0.85f * i, 1.0f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
+          math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+        )
+      );
+    }
+  }
+  scene_graph->set_root(
     gl::model(
-      *triangle,
-      math::vector_3d(1.0f, 0.8f, 1.0f),
-      math::vector_3d(-7.07107f, 0.0f, 7.07107f), math::quaternion(180, math::vector_3d(0.0f, 1.0f, 0.0f)),
+      *border,
+      math::vector_3d(1, 1, 1),
+      math::vector_3d(13.5f, 14.3f, 0.0f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
       math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
     )
   );
-  auto triangle_1_2 = scene_graph->set_child(
-    *triangle_2_2,
-    gl::model(
-      *triangle,
-      math::vector_3d(0.5f, 0.5f, 0.5f),
-      math::vector_3d(1.0f, 0.0f, 7.07107f * 3 - 1.0f), math::quaternion(90, math::vector_3d(0.0f, 1.0f, 0.0f)),
-      math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
-    )
-  );
-  auto triangle_s = scene_graph->set_child(
-    *triangle_2_2,
-    gl::model(
-      *triangle,
-      math::vector_3d(0.707107f, 2.5f, 0.707107f),
-      math::vector_3d(7.07107f * 2, 0.0f, 20 * 0.707107f * 0.707107f), math::quaternion(90, math::vector_3d(0.0f, 1.0f, 0.0f)),
-      math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
-    )
-  );
-  auto paralellogram_1 = scene_graph->set_child(
-    *triangle_s,
-    gl::model(
-      *paralellogram,
-      math::vector_3d(0.5 / 0.707107f, 0.4f, 0.5 / 0.707107f),
-      math::vector_3d(0.0f, 0.0f, 0.0f), math::quaternion(180, math::vector_3d(1.0f, 0.0f, 0.0f)),
-      math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
-    )
-  );
+  for (auto i = 0u; i < 6u; i++) {
+    for (auto j = 0u; j < 2u; j++) {
+      scene_graph->set_root(
+        gl::model(
+          *big_pipe,
+          math::vector_3d(1, 1, 1),
+          math::vector_3d(0.5f + 26.0f * j, 1.875f + 5.0f * i, 0.0f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
+          math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+        )
+      );
+    }
+  }
+  for (auto j = 0u; j < 2u; j++) {
+    scene_graph->set_root(
+      gl::model(
+        *big_pipe,
+        math::vector_3d(1, 1, 1),
+        math::vector_3d(6.75f + 13.5f * j, 29.0f, 0.0f), math::quaternion(90, math::vector_3d(0.0f, 0.0f, 1.0f)),
+        math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+      )
+    );
+  }
+
   cameras = {
     gl::camera{
       gl::view(
-        math::vector_3d(5, 25, 50), math::quaternion(-30, math::vector_3d(1.0f, 0.0f, 0.0f)),
+        math::vector_3d(13.5f, 15.0f, 30.0f), math::quaternion(0, math::vector_3d(1.0f, 0.0f, 0.0f)),
         math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
       ),
       gl::perspective_projection(
@@ -324,22 +328,23 @@ int main(int argc, char **argv) {
     },
     gl::camera{
       gl::view(
-        math::vector_3d(5, 25, 50), math::quaternion(-30, math::vector_3d(1.0f, 0.0f, 0.0f)),
+        math::vector_3d(13.5f, 15.0f, 30.0f), math::quaternion(0, math::vector_3d(1.0f, 0.0f, 0.0f)),
         math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
       ),
       gl::orthogonal_projection(
         width, height,
-        -20.0f, 20.0f,
-        -20.0f, 20.0f,
+        -13.5f, 13.5f,
+        -15.0f, 15.0f,
         1.0f, 100.0f
       )
     }
   };
+
   free_cameras = {
     gl::free_camera{
       gl::free_view(
-        math::vector_3d(5, 25, 50),
-        math::vector_3d(-30, 0, 0)
+        math::vector_3d(13.5f, 15.0f, 30.0f),
+        math::vector_3d(0, 0, 0)
       ),
       gl::perspective_projection(
         width, height,
@@ -349,18 +354,139 @@ int main(int argc, char **argv) {
     },
     gl::free_camera{
       gl::free_view(
-        math::vector_3d(5, 25, 50),
-        math::vector_3d(-30, 0, 0)
+        math::vector_3d(13.5f, 15.0f, 30.0f),
+        math::vector_3d(0, 0, 0)
       ),
       gl::orthogonal_projection(
         width, height,
-        -20.0f, 20.0f,
-        -20.0f, 20.0f,
+        -13.5f, 13.5f,
+        -15.0f, 15.0f,
         1.0f, 100.0f
       )
     }
   };
-  current_projection = 0;
+  current_projection = 1;
+  current_view = 1;
+
+  //square = engine->load_scene<gl::obj>(*program, "share/square.obj");
+  //triangle = engine->load_scene<gl::obj>(*program, "share/triangle.obj");
+  //paralellogram = engine->load_scene<gl::obj>(*program, "share/paralellogram.obj");
+
+  //scene_graph = new gl::graph<gl::model>();
+  //auto triangle_2_1 = scene_graph->set_root(
+  //  gl::model(
+  //    *triangle,
+  //    math::vector_3d(20, 5, 20),
+  //    math::vector_3d(0, 0, 0), math::quaternion(45, math::vector_3d(0.0f, 1.0f, 0.0f)),
+  //    math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+  //  )
+  //);
+  //auto triangle_2_2 = scene_graph->set_child(
+  //  *triangle_2_1,
+  //  gl::model(
+  //    *triangle,
+  //    math::vector_3d(1.0f, 0.5f, 1.0f),
+  //    math::vector_3d(0, 0, 0), math::quaternion(180, math::vector_3d(0.0f, 1.0f, 0.0f)),
+  //    math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+  //  )
+  //);
+  //auto square_1 = scene_graph->set_child(
+  //  *triangle_2_1,
+  //  gl::model(
+  //    *square,
+  //    math::vector_3d(0.5f, 0.7f, 0.5f),
+  //    math::vector_3d(-7.07107f * 2, 0.0f, -7.07107f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
+  //    math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+  //  )
+  //);
+  //auto triangle_1_1 = scene_graph->set_child(
+  //  *square_1,
+  //  gl::model(
+  //    *triangle,
+  //    math::vector_3d(1.0f, 0.8f, 1.0f),
+  //    math::vector_3d(-7.07107f, 0.0f, 7.07107f), math::quaternion(180, math::vector_3d(0.0f, 1.0f, 0.0f)),
+  //    math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+  //  )
+  //);
+  //auto triangle_1_2 = scene_graph->set_child(
+  //  *triangle_2_2,
+  //  gl::model(
+  //    *triangle,
+  //    math::vector_3d(0.5f, 0.5f, 0.5f),
+  //    math::vector_3d(1.0f, 0.0f, 7.07107f * 3 - 1.0f), math::quaternion(90, math::vector_3d(0.0f, 1.0f, 0.0f)),
+  //    math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+  //  )
+  //);
+  //auto triangle_s = scene_graph->set_child(
+  //  *triangle_2_2,
+  //  gl::model(
+  //    *triangle,
+  //    math::vector_3d(0.707107f, 2.5f, 0.707107f),
+  //    math::vector_3d(7.07107f * 2, 0.0f, 20 * 0.707107f * 0.707107f), math::quaternion(90, math::vector_3d(0.0f, 1.0f, 0.0f)),
+  //    math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+  //  )
+  //);
+  //auto paralellogram_1 = scene_graph->set_child(
+  //  *triangle_s,
+  //  gl::model(
+  //    *paralellogram,
+  //    math::vector_3d(0.5 / 0.707107f, 0.4f, 0.5 / 0.707107f),
+  //    math::vector_3d(0.0f, 0.0f, 0.0f), math::quaternion(180, math::vector_3d(1.0f, 0.0f, 0.0f)),
+  //    math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+  //  )
+  //);
+  //cameras = {
+  //  gl::camera{
+  //    gl::view(
+  //      math::vector_3d(5, 25, 50), math::quaternion(-30, math::vector_3d(1.0f, 0.0f, 0.0f)),
+  //      math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+  //    ),
+  //    gl::perspective_projection(
+  //      width, height,
+  //      20,
+  //      1.0f, 100.0f
+  //    )
+  //  },
+  //  gl::camera{
+  //    gl::view(
+  //      math::vector_3d(5, 25, 50), math::quaternion(-30, math::vector_3d(1.0f, 0.0f, 0.0f)),
+  //      math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+  //    ),
+  //    gl::orthogonal_projection(
+  //      width, height,
+  //      -20.0f, 20.0f,
+  //      -20.0f, 20.0f,
+  //      1.0f, 100.0f
+  //    )
+  //  }
+  //};
+  //free_cameras = {
+  //  gl::free_camera{
+  //    gl::free_view(
+  //      math::vector_3d(5, 25, 50),
+  //      math::vector_3d(-30, 0, 0)
+  //    ),
+  //    gl::perspective_projection(
+  //      width, height,
+  //      20,
+  //      1.0f, 100.0f
+  //    )
+  //  },
+  //  gl::free_camera{
+  //    gl::free_view(
+  //      math::vector_3d(5, 25, 50),
+  //      math::vector_3d(-30, 0, 0)
+  //    ),
+  //    gl::orthogonal_projection(
+  //      width, height,
+  //      -20.0f, 20.0f,
+  //      -20.0f, 20.0f,
+  //      1.0f, 100.0f
+  //    )
+  //  }
+  //};
+  //current_projection = 0;
+  //current_view = 0;
 
   engine->start();
 
