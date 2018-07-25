@@ -67,9 +67,9 @@ void object::execute(kinematic_movement movement) {
   // Integrate with velocity
   this->position += movement.linear * movement.duration;
   for (auto count = 0u; count < movement.duration; count++) {
-    std::cout << (this->orientation).x << " " << (this->orientation).y << " " << (this->orientation).z << " " << (this->orientation).w;
+    //std::cout << (this->orientation).x << " " << (this->orientation).y << " " << (this->orientation).z << " " << (this->orientation).w;
     this->orientation = movement.angular * this->orientation;
-    std::cout << " -> " << (this->orientation).x << " " << (this->orientation).y << " " << (this->orientation).z << " " << (this->orientation).w << std::endl;
+    //std::cout << " -> " << (this->orientation).x << " " << (this->orientation).y << " " << (this->orientation).z << " " << (this->orientation).w << std::endl;
   }
 
   // Set orientation from velocity

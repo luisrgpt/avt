@@ -23,8 +23,8 @@ quaternion::quaternion(const float& theta, const vector_3d& axis) {
   vector_3d axisn = axis.Normalize();
 
   float a = theta * (float)DEGREES_TO_RADIANS;
-  this->w = cosf(theta / 2.0f);
-  float s = sinf(theta / 2.0f);
+  this->w = cosf(a / 2.0f);
+  float s = sinf(a / 2.0f);
   this->x = axisn.x * s;
   this->y = axisn.y * s;
   this->z = axisn.z * s;

@@ -12,7 +12,9 @@ constexpr unsigned
 
 gl::engine *engine;
 gl::program *program;
-gl::scene *scene;
+gl::scene *square;
+gl::scene *triangle;
+gl::scene *paralellogram;
 gl::uniform *projection_view_model;
 gl::graph<gl::model> *scene_graph;
 std::vector<gl::camera> cameras;
@@ -66,32 +68,32 @@ void keyboard(unsigned char key, int x, int y) {
         break;
       case 'j':
         for (auto &camera : cameras) {
-          camera.view.execute(gl::rotation(math::quaternion(0.02f, camera.view.object.orientation * math::vector_3d(0.0f, 1.0f, 0.0f)), 1));
+          camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(0.0f, 1.0f, 0.0f)), 1));
         }
         break;
       case 'l':
         for (auto &camera : cameras) {
-          camera.view.execute(gl::rotation(math::quaternion(0.02f, camera.view.object.orientation * math::vector_3d(0.0f, -1.0f, 0.0f)), 1));
+          camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(0.0f, -1.0f, 0.0f)), 1));
         }
         break;
       case 'k':
         for (auto &camera : cameras) {
-          camera.view.execute(gl::rotation(math::quaternion(0.02f, camera.view.object.orientation * math::vector_3d(-1.0f, 0.0f, 0.0f)), 1));
+          camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(-1.0f, 0.0f, 0.0f)), 1));
         }
         break;
       case 'i':
         for (auto &camera : cameras) {
-          camera.view.execute(gl::rotation(math::quaternion(0.02f, camera.view.object.orientation * math::vector_3d(1.0f, 0.0f, 0.0f)), 1));
+          camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(1.0f, 0.0f, 0.0f)), 1));
         }
         break;
       case 'u':
         for (auto &camera : cameras) {
-          camera.view.execute(gl::rotation(math::quaternion(0.02f, camera.view.object.orientation * math::vector_3d(0.0f, 0.0f, 1.0f)), 1));
+          camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(0.0f, 0.0f, 1.0f)), 1));
         }
         break;
       case 'o':
         for (auto &camera : cameras) {
-          camera.view.execute(gl::rotation(math::quaternion(0.02f, camera.view.object.orientation * math::vector_3d(0.0f, 0.0f, -1.0f)), 1));
+          camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(0.0f, 0.0f, -1.0f)), 1));
         }
         break;
       case 'x':
@@ -185,38 +187,77 @@ int main(int argc, char **argv) {
   engine->link(*program);
   projection_view_model = engine->get_uniform(*program, "projection_view_model");
 
-  scene = engine->load_scene<gl::obj>(*program, "share/cube.obj");
+  square = engine->load_scene<gl::obj>(*program, "share/square.obj");
+  triangle = engine->load_scene<gl::obj>(*program, "share/triangle.obj");
+  paralellogram = engine->load_scene<gl::obj>(*program, "share/paralellogram.obj");
 
   scene_graph = new gl::graph<gl::model>();
-  auto front = scene_graph->set_root(
+  auto triangle_2_1 = scene_graph->set_root(
     gl::model(
-      *scene,
-      math::vector_3d(10, 10, 10),
-      math::vector_3d(0, 0, 0), math::quaternion(0.2f, math::vector_3d(0.0f, 1.0f, 0.0f)),
+      *triangle,
+      math::vector_3d(20, 5, 20),
+      math::vector_3d(0, 0, 0), math::quaternion(45, math::vector_3d(0.0f, 1.0f, 0.0f)),
       math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
     )
   );
-  scene_graph->set_root(
+  auto triangle_2_2 = scene_graph->set_child(
+    *triangle_2_1,
     gl::model(
-      *scene,
-      math::vector_3d(10, 10, 10),
-      math::vector_3d(20, 0, 20), math::quaternion(0.0f, math::vector_3d(0.0f, 1.0f, 0.0f)),
+      *triangle,
+      math::vector_3d(1.0f, 0.5f, 1.0f),
+      math::vector_3d(0, 0, 0), math::quaternion(180, math::vector_3d(0.0f, 1.0f, 0.0f)),
       math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
     )
   );
-  scene_graph->set_child(
-    *front,
+  auto square_1 = scene_graph->set_child(
+    *triangle_2_1,
     gl::model(
-      *scene,
-      math::vector_3d(1, 1, 1),
-      math::vector_3d(0, 10, 0), math::quaternion(0.2f, math::vector_3d(0.0f, 1.0f, 0.0f)),
+      *square,
+      math::vector_3d(0.5f, 0.7f, 0.5f),
+      math::vector_3d(-7.07107f * 2, 0.0f, -7.07107f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
       math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
     )
   );
+  auto triangle_1_1 = scene_graph->set_child(
+    *square_1,
+    gl::model(
+      *triangle,
+      math::vector_3d(1.0f, 0.8f, 1.0f),
+      math::vector_3d(-7.07107f, 0.0f, 7.07107f), math::quaternion(180, math::vector_3d(0.0f, 1.0f, 0.0f)),
+      math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+    )
+  );
+  auto triangle_1_2 = scene_graph->set_child(
+    *triangle_2_2,
+    gl::model(
+      *triangle,
+      math::vector_3d(0.5f, 0.5f, 0.5f),
+      math::vector_3d(1.0f, 0.0f, 7.07107f * 3 - 1.0f), math::quaternion(90, math::vector_3d(0.0f, 1.0f, 0.0f)),
+      math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+    )
+  );
+  auto triangle_s = scene_graph->set_child(
+    *triangle_2_2,
+    gl::model(
+      *triangle,
+      math::vector_3d(0.707107f, 2.5f, 0.707107f),
+      math::vector_3d(7.07107f * 2, 0.0f, 20 * 0.707107f * 0.707107f), math::quaternion(90, math::vector_3d(0.0f, 1.0f, 0.0f)),
+      math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+    )
+  );
+  auto paralellogram_1 = scene_graph->set_child(
+    *triangle_s,
+    gl::model(
+      *paralellogram,
+      math::vector_3d(0.5 / 0.707107f, 0.4f, 0.5 / 0.707107f),
+      math::vector_3d(0.0f, 0.0f, 0.0f), math::quaternion(180, math::vector_3d(1.0f, 0.0f, 0.0f)),
+      math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+    )
+    );
   cameras = {
     gl::camera{
     gl::view(
-      math::vector_3d(0, 0, 50), math::quaternion(0.0f, math::vector_3d(0.0f, 1.0f, 0.0f)),
+      math::vector_3d(5, 40, 70), math::quaternion(-30, math::vector_3d(1.0f, 0.0f, 0.0f)),
       math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
     ),
     gl::perspective_projection(
@@ -228,7 +269,7 @@ int main(int argc, char **argv) {
   },
     gl::camera{
     gl::view(
-      math::vector_3d(0, 0, 50), math::quaternion(0.0f, math::vector_3d(0.0f, 1.0f, 0.0f)),
+      math::vector_3d(5, 40, 70), math::quaternion(-30, math::vector_3d(1.0f, 0.0f, 0.0f)),
       math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
     ),
     gl::orthogonal_projection(

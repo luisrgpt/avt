@@ -35,7 +35,7 @@ view::view(
   math::vector_3d velocity,
   math::quaternion rotation)
   : object(position, orientation, velocity, rotation)
-  , matrix(math::matrix_4d::View(position, orientation * math::vector_3d(0.0f, 0.0f, 1.0f), orientation * math::vector_3d(0.0f, 1.0f, 0.0f))) {
+  , matrix(math::matrix_4d::View(position, position + orientation * math::vector_3d(0.0f, 0.0f, -1.0f), orientation * math::vector_3d(0.0f, 1.0f, 0.0f))) {
   //std::cout << "lookat: " << std::endl;
   //std::cout << this->matrix[0][0] << " " << this->matrix[0][1] << " " << this->matrix[0][2] << " " << this->matrix[0][3] << " " << std::endl;
   //std::cout << this->matrix[1][0] << " " << this->matrix[1][1] << " " << this->matrix[1][2] << " " << this->matrix[1][3] << " " << std::endl;
@@ -178,7 +178,19 @@ void model::execute(kinematic_movement movement) {
 }
 void view::execute(kinematic_movement movement) {
   this->object.execute(movement);
+  //std::cout << "before lookat: " << std::endl;
+  //std::cout << this->matrix[0][0] << " " << this->matrix[0][1] << " " << this->matrix[0][2] << " " << this->matrix[0][3] << " " << std::endl;
+  //std::cout << this->matrix[1][0] << " " << this->matrix[1][1] << " " << this->matrix[1][2] << " " << this->matrix[1][3] << " " << std::endl;
+  //std::cout << this->matrix[2][0] << " " << this->matrix[2][1] << " " << this->matrix[2][2] << " " << this->matrix[2][3] << " " << std::endl;
+  //std::cout << this->matrix[3][0] << " " << this->matrix[3][1] << " " << this->matrix[3][2] << " " << this->matrix[3][3] << " " << std::endl;
+  //std::cout << std::endl;
   this->matrix = math::matrix_4d::View(this->object.position, this->object.position + this->object.orientation * math::vector_3d(0.0f, 0.0f, -1.0f), this->object.orientation * math::vector_3d(0.0f, 1.0f, 0.0f));
+  //std::cout << "after lookat: " << std::endl;
+  //std::cout << this->matrix[0][0] << " " << this->matrix[0][1] << " " << this->matrix[0][2] << " " << this->matrix[0][3] << " " << std::endl;
+  //std::cout << this->matrix[1][0] << " " << this->matrix[1][1] << " " << this->matrix[1][2] << " " << this->matrix[1][3] << " " << std::endl;
+  //std::cout << this->matrix[2][0] << " " << this->matrix[2][1] << " " << this->matrix[2][2] << " " << this->matrix[2][3] << " " << std::endl;
+  //std::cout << this->matrix[3][0] << " " << this->matrix[3][1] << " " << this->matrix[3][2] << " " << this->matrix[3][3] << " " << std::endl;
+  //std::cout << std::endl;
 }
 void projection::reshape(float width, float height) {
   glViewport(0, 0, width, height);
@@ -736,11 +748,12 @@ void engine::draw(
     auto model = scene_graph.nodes[i];
     auto parent_id = scene_graph.edges[i].id;
 
+    math::matrix_4d buffer = math::matrix_4d(model.object.orientation);
     translation = math::matrix_3d::Translation(model.object.position.x, model.object.position.y, model.object.position.z) * translations[parent_id];
     rotation = math::matrix_4d(model.object.orientation) * rotations[parent_id];
     scalation = model.scale * scalations[parent_id];
 
-    math::matrix_4d buffer = math::matrix_4d(model.object.orientation);
+    //math::matrix_4d buffer = math::matrix_4d(model.object.orientation);
     //std::cout << "rotation: " << std::endl;
     //std::cout << buffer[0][0] << " " << buffer[0][1] << " " << buffer[0][2] << " " << buffer[0][3] << " " << std::endl;
     //std::cout << buffer[1][0] << " " << buffer[1][1] << " " << buffer[1][2] << " " << buffer[1][3] << " " << std::endl;
@@ -748,7 +761,7 @@ void engine::draw(
     //std::cout << buffer[3][0] << " " << buffer[3][1] << " " << buffer[3][2] << " " << buffer[3][3] << " " << std::endl;
     //std::cout << std::endl;
 
-    buffer = math::matrix_3d::Translation(model.object.position.x, model.object.position.y, model.object.position.z);
+    //buffer = math::matrix_3d::Translation(model.object.position.x, model.object.position.y, model.object.position.z);
     //std::cout << "translation: " << std::endl;
     //std::cout << buffer[0][0] << " " << buffer[0][1] << " " << buffer[0][2] << " " << buffer[0][3] << " " << std::endl;
     //std::cout << buffer[1][0] << " " << buffer[1][1] << " " << buffer[1][2] << " " << buffer[1][3] << " " << std::endl;
@@ -756,7 +769,7 @@ void engine::draw(
     //std::cout << buffer[3][0] << " " << buffer[3][1] << " " << buffer[3][2] << " " << buffer[3][3] << " " << std::endl;
     //std::cout << std::endl;
 
-    buffer = math::matrix_3d::Translation(model.object.position.x, model.object.position.y, model.object.position.z) * translations[parent_id];
+    //buffer = math::matrix_3d::Translation(model.object.position.x, model.object.position.y, model.object.position.z) * translations[parent_id];
     //std::cout << "multiplication: " << std::endl;
     //std::cout << buffer[0][0] << " " << buffer[0][1] << " " << buffer[0][2] << " " << buffer[0][3] << " " << std::endl;
     //std::cout << buffer[1][0] << " " << buffer[1][1] << " " << buffer[1][2] << " " << buffer[1][3] << " " << std::endl;
