@@ -75,6 +75,19 @@ namespace gl {
     void execute(kinematic_movement);
     //void execute(dynamic_movement);
   };
+  class free_view {
+  private:
+    math::vector_3d position;
+    math::vector_3d euler_angle;
+
+  public:
+    math::matrix_4d matrix;
+
+    free_view(math::vector_3d, math::vector_3d);
+
+    void apply_velocity(math::vector_3d);
+    void apply_rotation(math::vector_3d);
+  };
   class projection {
   private:
     projection_type type;
@@ -99,11 +112,15 @@ namespace gl {
   };
   class perspective_projection : public projection {
   public:
-    perspective_projection(float, float, float, float, float, float, float, float);
+    perspective_projection(float, float, float, float, float);
   };
 
   struct camera {
     view view;
+    projection projection;
+  };
+  struct free_camera {
+    free_view view;
     projection projection;
   };
 
@@ -140,6 +157,8 @@ namespace gl {
     engine(int*, char**, std::string, unsigned, unsigned);
     ~engine();
 
+    bool get_left_mouse_state(int, int);
+
     void set_close_callback(void(*)(void));
     void set_display_callback(void(*)(void));
     void set_idle_callback(void(*)(void));
@@ -170,6 +189,8 @@ namespace gl {
 
     void draw(mesh);
     void draw(uniform, graph<model>, camera);
+    void draw(uniform, graph<model>, free_camera);
+    void draw(uniform, graph<model>, math::matrix_4d, math::matrix_4d);
 
     void unbind();
     void unuse();

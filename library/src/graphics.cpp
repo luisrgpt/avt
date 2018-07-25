@@ -43,6 +43,15 @@ view::view(
   //std::cout << this->matrix[3][0] << " " << this->matrix[3][1] << " " << this->matrix[3][2] << " " << this->matrix[3][3] << " " << std::endl;
   //std::cout << std::endl;
 }
+free_view::free_view(math::vector_3d position, math::vector_3d euler_angle)
+  : position(position)
+  , euler_angle(euler_angle)
+  , matrix(math::matrix_4d::kZero) {
+  math::vector_3d eye = math::vector_3d(0.0f, 0.0f, -1.0f) * math::matrix_3d::Rotation(euler_angle.x, euler_angle.y, euler_angle.z);
+  math::vector_3d up = math::vector_3d(0.0f, 1.0f, 0.0f) * math::matrix_3d::Rotation(euler_angle.x, euler_angle.y, euler_angle.z);
+
+  this->matrix = math::matrix_4d::View(position, position + eye, up);
+}
 projection::projection(
   projection_type type,
   float left,
@@ -75,10 +84,9 @@ orthogonal_projection::orthogonal_projection(
 }
 perspective_projection::perspective_projection(
   float width, float height,
-  float left, float right,
-  float bottom, float top,
+  float fovy,
   float z_near, float z_far)
-  : projection(perspective, left, right, bottom, top, z_near, z_far, math::matrix_4d::Frustum(left * width/height, right * width/height, bottom, top, z_near, z_far)) {
+  : projection(perspective, fovy, 0.0f, 0.0f, 0.0f, z_near, z_far, math::matrix_4d::PerspectiveProjection(fovy, width/height, z_near, z_far)) {
   //std::cout << "frustum: " << std::endl;
   //std::cout << this->matrix[0][0] << " " << this->matrix[0][1] << " " << this->matrix[0][2] << " " << this->matrix[0][3] << " " << std::endl;
   //std::cout << this->matrix[1][0] << " " << this->matrix[1][1] << " " << this->matrix[1][2] << " " << this->matrix[1][3] << " " << std::endl;
@@ -170,7 +178,18 @@ engine::~engine() {
       glBindVertexArray(0);
     }
   }
-  glutDestroyWindow(this->window_id);
+}
+
+bool engine::get_left_mouse_state(int button, int state) {
+  switch (button) {
+  case GLUT_LEFT_BUTTON:
+    switch (state) {
+    case GLUT_UP:
+      return false;
+    }
+    return true;
+  }
+  return false;
 }
 
 void model::execute(kinematic_movement movement) {
@@ -192,14 +211,30 @@ void view::execute(kinematic_movement movement) {
   //std::cout << this->matrix[3][0] << " " << this->matrix[3][1] << " " << this->matrix[3][2] << " " << this->matrix[3][3] << " " << std::endl;
   //std::cout << std::endl;
 }
+void free_view::apply_velocity(math::vector_3d velocity) {
+  this->position += velocity;
+
+  math::vector_3d eye = math::vector_3d(0.0f, 0.0f, -1.0f) * math::matrix_3d::Rotation(this->euler_angle.x, this->euler_angle.y, this->euler_angle.z);
+  math::vector_3d up = math::vector_3d(0.0f, 1.0f, 0.0f) * math::matrix_3d::Rotation(this->euler_angle.x, this->euler_angle.y, this->euler_angle.z);
+
+  this->matrix = math::matrix_4d::View(this->position, this->position + eye, up);
+}
+void free_view::apply_rotation(math::vector_3d euler_angle) {
+  this->euler_angle += euler_angle;
+
+  math::vector_3d eye = math::vector_3d(0.0f, 0.0f, -1.0f) * math::matrix_3d::Rotation(this->euler_angle.x, this->euler_angle.y, this->euler_angle.z);
+  math::vector_3d up = math::vector_3d(0.0f, 1.0f, 0.0f) * math::matrix_3d::Rotation(this->euler_angle.x, this->euler_angle.y, this->euler_angle.z);
+
+  this->matrix = math::matrix_4d::View(this->position, this->position + eye, up);
+}
 void projection::reshape(float width, float height) {
   glViewport(0, 0, width, height);
 
   float ratio = width / height;
   if (this->type == perspective) {
-    this->matrix = math::matrix_4d::Frustum(
-      this->left * ratio, this->right * ratio,
-      this->bottom, this->top,
+    this->matrix = math::matrix_4d::PerspectiveProjection(
+      this->left, //fovy
+      ratio,
       this->z_near, this->z_far
     );
   }
@@ -723,14 +758,35 @@ void engine::draw(mesh scene) {
 void engine::draw(
   uniform uniform,
   graph<model> scene_graph,
-  camera camera
+  camera camera) {
+  this->draw(
+    std::cref(uniform),
+    std::cref(scene_graph),
+    std::cref(camera.projection.matrix),
+    std::cref(camera.view.matrix)
+  );
+}
+void engine::draw(
+  uniform uniform,
+  graph<model> scene_graph,
+  free_camera camera) {
+  this->draw(
+    std::cref(uniform),
+    std::cref(scene_graph),
+    std::cref(camera.projection.matrix),
+    std::cref(camera.view.matrix)
+  );
+}
+void engine::draw(
+  uniform uniform,
+  graph<model> scene_graph,
+  math::matrix_4d projection,
+  math::matrix_4d view
 ) {
   std::vector<math::matrix_4d> translations;
   std::vector<math::matrix_4d> rotations;
   std::vector<math::matrix_4d> scalations;
 
-  math::matrix_4d projection = math::matrix_4d::kIdentity;
-  math::matrix_4d view = math::matrix_4d::kIdentity;
   math::matrix_4d translation = math::matrix_4d::kIdentity;
   math::matrix_4d rotation = math::matrix_4d::kIdentity;
   math::matrix_4d scalation = math::matrix_4d::kIdentity;
@@ -738,9 +794,6 @@ void engine::draw(
   translations.push_back(math::matrix_4d::kIdentity);
   rotations.push_back(math::matrix_4d::kIdentity);
   scalations.push_back(math::matrix_4d::kIdentity);
-
-  projection = camera.projection.matrix;
-  view = camera.view.matrix;
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

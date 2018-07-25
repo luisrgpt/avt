@@ -2,6 +2,8 @@
 
 using namespace math;
 
+#define DEGREES_TO_RADIANS 0.01745329251994329547
+
 matrix_3d::matrix_3d(const float& xx, const float& xy, const float& xz,
                           const float& yx, const float& yy, const float& yz,
                           const float& zx, const float& zy, const float& zz)
@@ -259,19 +261,22 @@ const matrix_3d matrix_3d::Rotation(const float& anglex, const float& angley, co
   return matrix_3d::RotationX(anglex) * matrix_3d::RotationY(angley) * matrix_3d::RotationZ(anglez);
 }
 
-const matrix_3d matrix_3d::RotationX(const float& angle) {
+const matrix_3d matrix_3d::RotationX(const float& degree) {
+  float angle = degree * DEGREES_TO_RADIANS;
   return matrix_3d(1.0f, 0.0f      , 0.0f,
                   0.0f, cosf(angle), -sinf(angle),
                   0.0f, sinf(angle),  cosf(angle));
 }
 
-const matrix_3d matrix_3d::RotationY(const float& angle) {
+const matrix_3d matrix_3d::RotationY(const float& degree) {
+  float angle = degree * DEGREES_TO_RADIANS;
   return matrix_3d( cosf(angle), 0.0f, sinf(angle),
                    0.0f      , 1.0f, 0.0f,
                   -sinf(angle), 0.0f, cosf(angle));
 }
 
-const matrix_3d matrix_3d::RotationZ(const float& angle) {
+const matrix_3d matrix_3d::RotationZ(const float& degree) {
+  float angle = degree * DEGREES_TO_RADIANS;
   return matrix_3d(cosf(angle), -sinf(angle), 0.0f,
                   sinf(angle),  cosf(angle), 0.0f,
                   0.0f      ,  0.0f      , 1.0f);
