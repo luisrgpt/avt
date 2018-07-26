@@ -130,6 +130,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\graphics.hpp" />
+    <ClInclude Include="include\loaders.hpp" />
     <ClInclude Include="include\math\matrix_2d.hpp" />
     <ClInclude Include="include\math\matrix_3d.hpp" />
     <ClInclude Include="include\math\matrix_4d.hpp" />
@@ -142,6 +143,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\graphics.cpp" />
+    <ClCompile Include="src\loaders.cpp" />
     <ClCompile Include="src\math\matrix_2d.cpp" />
     <ClCompile Include="src\math\matrix_3d.cpp" />
     <ClCompile Include="src\math\matrix_4d.cpp" />

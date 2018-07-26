@@ -15,6 +15,7 @@
 #include <array>
 #include <map>
 #include <deque>
+#include <iterator>
 #include <sstream>
 
 #include "math/matrix_3d.hpp"

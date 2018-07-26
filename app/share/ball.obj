@@ -1,6 +1,6 @@
-# Blender v2.79 (sub 0) OBJ File: 'arena.blend'
+# Blender v2.79 (sub 0) OBJ File: 'ball.blend'
 # www.blender.org
-mtllib ball.mtl
+mtllib materials.mtl
 o Icosphere
 v 0.000000 -0.300000 0.000000
 v 0.217082 -0.134166 0.157718
@@ -484,7 +484,7 @@ vn 0.3105 -0.8363 0.4519
 vn 0.4674 -0.7594 0.4526
 vn 0.5087 -0.6369 0.5792
 vn 0.6153 -0.5545 0.5603
-usemtl None
+usemtl Dark
 s off
 f 1//1 16//1 15//1
 f 2//2 18//2 24//2

@@ -130,12 +130,12 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="share\cube.mtl" />
-    <None Include="share\cube.ply" />
     <None Include="share\normal_fragment.glsl" />
     <None Include="share\normal_vertex.glsl" />
     <None Include="share\position_fragment.glsl" />
     <None Include="share\position_vertex.glsl" />
+    <None Include="share\texture_fragment.glsl" />
+    <None Include="share\texture_vertex.glsl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp" />

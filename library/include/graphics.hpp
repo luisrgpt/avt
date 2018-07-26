@@ -5,6 +5,7 @@
 
 /////////////////////////////////////////////////////////////////////// DEPENDENCIES
 #include "physics.hpp"
+#include "loaders.hpp"
 
 /////////////////////////////////////////////////////////////////////// NAMESPACE
 namespace gl {
@@ -16,10 +17,6 @@ namespace gl {
     tess_evaluation,
     fragment
   };
-  enum scene_type {
-    gltf,
-    obj
-  };
   enum projection_type : bool {
     perspective,
     orthogonal
@@ -30,16 +27,18 @@ namespace gl {
   };
   struct mesh {
     unsigned id;
-    unsigned n_faces;
+    size_t n_faces;
     unsigned program_id;
     unsigned texture_id;
     unsigned block_id;
-  };
-  struct material {
-    float diffuse[4];
-    float ambient[4];
-    float specular[4];
-    float emissive[4];
+    unsigned mvp_id;
+    unsigned material_id;
+
+    bool has_material;
+    std::array<float, 3> ambient;
+    std::array<float, 3> diffuse;
+    std::array<float, 3> specular;
+    std::array<float, 3> emissive;
     float shininess;
     int n_textures;
   };
@@ -47,7 +46,7 @@ namespace gl {
     const int id;
   };
   struct uniform_block {
-    const int id;
+    const unsigned id;
   };
   struct node {
     const unsigned id;
@@ -174,11 +173,10 @@ namespace gl {
     template<shader_type type>
     void load_shader(program, std::string);
     uniform* get_uniform(program, std::string);
-    //uniform_block* get_uniform_block(program, std::string);
+    uniform_block* get_uniform_block(program, std::string);
     void link(program);
 
-    template<scene_type type>
-    scene* load_scene(program, std::string);
+    scene* load_scene(program, loader::obj, loader::mtl, uniform_block, uniform_block);
 
     void use(program);
     void bind(mesh);
@@ -186,9 +184,9 @@ namespace gl {
     void set_uniform(uniform, math::matrix_4d);
 
     void draw(mesh);
-    void draw(uniform, graph<model>, camera);
-    void draw(uniform, graph<model>, free_camera);
-    void draw(uniform, graph<model>, math::matrix_4d, math::matrix_4d);
+    void draw(graph<model>, camera);
+    void draw(graph<model>, free_camera);
+    void draw(graph<model>, math::matrix_4d, math::matrix_4d);
 
     void unbind();
     void unuse();

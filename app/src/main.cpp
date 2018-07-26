@@ -12,7 +12,8 @@ height = 480;
 
 gl::engine *engine;
 gl::program *program;
-gl::uniform *projection_view_model;
+gl::uniform_block *projection_view_model;
+gl::uniform_block *material;
 gl::graph<gl::model> *scene_graph;
 std::vector<gl::camera> cameras;
 std::vector<gl::free_camera> free_cameras;
@@ -189,19 +190,16 @@ void display() {
 
   if (current_view == 0) {
     engine->draw(
-      *projection_view_model,
       *scene_graph,
       cameras[current_projection]
     );
   }
   else {
     engine->draw(
-      *projection_view_model,
       *scene_graph,
       free_cameras[current_projection]
     );
   }
-  //std::cout << std::endl;
 }
 int cnt = 0;
 void timer(int value) {
@@ -235,17 +233,27 @@ int main(int argc, char **argv) {
   engine->set_timer_callback(0, timer, 0);
 
   program = engine->create_program();
-  engine->load_shader<gl::vertex>(*program, "share/position_vertex.glsl");
-  engine->load_shader<gl::fragment>(*program, "share/position_fragment.glsl");
+  engine->load_shader<gl::vertex>(*program, "share/texture_vertex.glsl");
+  engine->load_shader<gl::fragment>(*program, "share/texture_fragment.glsl");
   engine->link(*program);
-  projection_view_model = engine->get_uniform(*program, "projection_view_model");
+  projection_view_model = engine->get_uniform_block(*program, "mvp");
+  material = engine->get_uniform_block(*program, "material");
 
-  gl::scene *field = engine->load_scene<gl::obj>(*program, "share/field.obj");
-  gl::scene *ship = engine->load_scene<gl::obj>(*program, "share/ship.obj");
-  gl::scene *ball = engine->load_scene<gl::obj>(*program, "share/ball.obj");
-  gl::scene *box = engine->load_scene<gl::obj>(*program, "share/box.obj");
-  gl::scene *big_pipe = engine->load_scene<gl::obj>(*program, "share/big_pipe.obj");
-  gl::scene *border = engine->load_scene<gl::obj>(*program, "share/border.obj");
+  loader::mtl materials("share/materials.mtl");
+  loader::obj obj_field("share/field.obj");
+  loader::obj obj_ship("share/ship.obj");
+  loader::obj obj_ball("share/ball.obj");
+  loader::obj obj_box("share/box.obj");
+  loader::obj obj_pipe("share/big_pipe.obj");
+  loader::obj obj_border("share/border.obj");
+
+  gl::scene *field = engine->load_scene(*program, obj_field, materials, *projection_view_model, *material);
+  gl::scene *ship = engine->load_scene(*program, obj_ship, materials, *projection_view_model, *material);
+  gl::scene *ball = engine->load_scene(*program, obj_ball, materials, *projection_view_model, *material);
+  gl::scene *box = engine->load_scene(*program, obj_box, materials, *projection_view_model, *material);
+  gl::scene *big_pipe = engine->load_scene(*program, obj_pipe, materials, *projection_view_model, *material);
+  gl::scene *border = engine->load_scene(*program, obj_border, materials, *projection_view_model, *material);
+
   scene_graph = new gl::graph<gl::model>();
   scene_graph->set_root(
     gl::model(
@@ -368,9 +376,9 @@ int main(int argc, char **argv) {
   current_projection = 1;
   current_view = 1;
 
-  //square = engine->load_scene<gl::obj>(*program, "share/square.obj");
-  //triangle = engine->load_scene<gl::obj>(*program, "share/triangle.obj");
-  //paralellogram = engine->load_scene<gl::obj>(*program, "share/paralellogram.obj");
+  //square = engine->load_scene(*program, "share/square.obj");
+  //triangle = engine->load_scene(*program, "share/triangle.obj");
+  //paralellogram = engine->load_scene(*program, "share/paralellogram.obj");
 
   //scene_graph = new gl::graph<gl::model>();
   //auto triangle_2_1 = scene_graph->set_root(

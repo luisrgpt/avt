@@ -10,9 +10,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="share\cube.ply">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="share\position_fragment.glsl">
       <Filter>Resource Files</Filter>
     </None>
@@ -25,7 +22,10 @@
     <None Include="share\normal_vertex.glsl">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="share\cube.mtl">
+    <None Include="share\texture_fragment.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="share\texture_vertex.glsl">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

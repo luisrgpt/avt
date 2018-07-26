@@ -1,40 +1,27 @@
 #version 450 core
 
 in vec3 Normal;
-in vec2 TexCoord;
 
-layout (std140) uniform fragment {
-    vec4 diffuse;
-    vec4 ambient;
-    vec4 specular;
-    vec4 emissive;
+layout(location = 15) uniform material {
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+    vec3 emissive;
     float shininess;
-    int texCount;
+    int tex_count;
 };
 
-uniform sampler2D texUnit;
+layout(location = 0) out vec4 Output;
 
-layout(location = 0) out vec4 output;
-
-void main()
+void main(void)
 {
-    vec4 color;
-    vec4 amb;
-    float intensity;
-    vec3 lightDir;
-    vec3 n;
- 
-    lightDir = normalize(vec3(1.0,1.0,1.0));
-    n = normalize(Normal);
-    intensity = max(dot(lightDir,n),0.0);
- 
-    if (texCount == 0) {
-        color = diffuse;
-        amb = ambient;
-    }
-    else {
-        color = texture2D(texUnit, TexCoord);
-        amb = color * 0.33;
-    }
-    output = (color * intensity) + amb;
+    //vec3 color;
+    //float intensity;
+    //vec3 light_dir;
+    //vec3 test;
+    //light_dir = normalize(vec3(1.0, 1.0, 1.0));
+    //intensity = max(dot(light_dir, Normal), 0.0);
+
+    //Output = vec4((diffuse * intensity) + ambient, 1.0);
+    Output = vec4(Normal, 1.0);
 }

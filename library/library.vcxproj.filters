@@ -47,6 +47,9 @@
     <ClInclude Include="include\math\quaternion.hpp">
       <Filter>Header Files\math</Filter>
     </ClInclude>
+    <ClInclude Include="include\loaders.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\physics.cpp">
@@ -78,6 +81,9 @@
     </ClCompile>
     <ClCompile Include="src\math\quaternion.cpp">
       <Filter>Source Files\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\loaders.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
