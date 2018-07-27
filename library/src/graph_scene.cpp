@@ -12,15 +12,6 @@ model::model(
   : scene_info(scene)
   , object(position, orientation, velocity, rotation)
   , scale(math::matrix_4d::Scaling(scale.x, scale.y, scale.z, 1.0f)) {
-  //std::cout << "quat: " << std::endl;
-  //std::cout << this->object.orientation.x << " " << this->object.orientation.y << " " << this->object.orientation.z << " " << this->object.orientation.w << " " << std::endl;
-  //std::cout << std::endl;
-  //std::cout << "scale: " << std::endl;
-  //std::cout << this->scale[0][0] << " " << this->scale[0][1] << " " << this->scale[0][2] << " " << this->scale[0][3] << " " << std::endl;
-  //std::cout << this->scale[1][0] << " " << this->scale[1][1] << " " << this->scale[1][2] << " " << this->scale[1][3] << " " << std::endl;
-  //std::cout << this->scale[2][0] << " " << this->scale[2][1] << " " << this->scale[2][2] << " " << this->scale[2][3] << " " << std::endl;
-  //std::cout << this->scale[3][0] << " " << this->scale[3][1] << " " << this->scale[3][2] << " " << this->scale[3][3] << " " << std::endl;
-  //std::cout << std::endl;
 }
 
 void model::execute(kinematic_movement movement) {

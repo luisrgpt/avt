@@ -28,9 +28,7 @@ quaternion::quaternion(const float& theta, const vector_3d& axis) {
   this->x = axisn.x * s;
   this->y = axisn.y * s;
   this->z = axisn.z * s;
-  //std::cout << "before gotcha " << this->x << " " << this->y << " " << this->z << " " << this->w << std::endl;
   this->Clean();
-  //std::cout << "after gotcha " << this->x << " " << this->y << " " << this->z << " " << this->w << std::endl;
 }
 
 const bool quaternion::operator==(const quaternion& other_quaternion) const {

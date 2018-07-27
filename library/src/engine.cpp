@@ -369,14 +369,6 @@ scene* engine::load_scene(program program, fs::obj obj, fs::mtl mtl) {
     if (mtl.filename.find(obj.mtllib) != std::string::npos && usemtl.compare("None") != 0) {
       for (auto i = 0u; i < mtl.newmtl.size(); i++) {
         if (mtl.newmtl[i].compare(usemtl) == 0) {
-          //std::cout << usemtl << std::endl;
-          //std::cout << "Ka " << mtl.Ka[i][0] << " " << mtl.Ka[i][1] << " " << mtl.Ka[i][2] << " " << std::endl;
-          //std::cout << "Kd " << mtl.Kd[i][0] << " " << mtl.Kd[i][1] << " " << mtl.Kd[i][2] << " " << std::endl;
-          //std::cout << "Ks " << mtl.Ks[i][0] << " " << mtl.Ks[i][1] << " " << mtl.Ks[i][2] << " " << std::endl;
-          //std::cout << "Ke " << mtl.Ke[i][0] << " " << mtl.Ke[i][1] << " " << mtl.Ke[i][2] << " " << std::endl;
-          //std::cout << "Ni " << mtl.Ni[i] << " " << std::endl;
-          //std::cout << std::endl;
-
           scene->push_back(
             mesh{
               false,

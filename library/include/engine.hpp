@@ -52,9 +52,9 @@ namespace gl {
       math::matrix_4d,  //rotation
       math::matrix_4d   //scalation
     );
-    float width, height;
 
   public:
+    float width, height;
 
     engine(int*, char**, std::string, unsigned, unsigned);
     ~engine();
