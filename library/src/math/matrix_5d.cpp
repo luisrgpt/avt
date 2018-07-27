@@ -1,4 +1,4 @@
-#include "math/matrix_5d.hpp"
+#include "math/matrix.hpp"
 
 using namespace math;
 

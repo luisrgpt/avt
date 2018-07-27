@@ -17,18 +17,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\math\matrix_2d.hpp">
-      <Filter>Header Files\math</Filter>
-    </ClInclude>
-    <ClInclude Include="include\math\matrix_3d.hpp">
-      <Filter>Header Files\math</Filter>
-    </ClInclude>
-    <ClInclude Include="include\math\matrix_4d.hpp">
-      <Filter>Header Files\math</Filter>
-    </ClInclude>
-    <ClInclude Include="include\math\matrix_5d.hpp">
-      <Filter>Header Files\math</Filter>
-    </ClInclude>
     <ClInclude Include="include\math\vector_2d.hpp">
       <Filter>Header Files\math</Filter>
     </ClInclude>
@@ -37,9 +25,6 @@
     </ClInclude>
     <ClInclude Include="include\math\vector_4d.hpp">
       <Filter>Header Files\math</Filter>
-    </ClInclude>
-    <ClInclude Include="include\graphics.hpp">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\physics.hpp">
       <Filter>Header Files</Filter>
@@ -50,12 +35,27 @@
     <ClInclude Include="include\loaders.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\math\matrix.hpp">
+      <Filter>Header Files\math</Filter>
+    </ClInclude>
+    <ClInclude Include="include\shaders.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\mouse_picking.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\camera.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\graph_scene.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\engine.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\physics.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\math\matrix_2d.cpp">
@@ -83,6 +83,18 @@
       <Filter>Source Files\math</Filter>
     </ClCompile>
     <ClCompile Include="src\loaders.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mouse_picking.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\camera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graph_scene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\engine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

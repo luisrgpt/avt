@@ -1,7 +1,8 @@
-#include "math/matrix_4d.hpp"
+#include "math/matrix.hpp"
 
 using namespace math;
 
+#define DEGREES_TO_RADIANS 0.01745329251994329547
 const float threshold = (float)1.0e-5;
 
 matrix_4d::matrix_4d(const float& xx, const float& xy, const float& xz, const float& xw,
@@ -126,7 +127,7 @@ const vector_4d matrix_4d::operator*(const vector_4d& vector) const {
   return vector_4d(new_values);
 }
 
-const matrix_4d matrix_4d::operator*(const matrix_4d& other_matrix) const {
+matrix_4d matrix_4d::operator*(const matrix_4d& other_matrix) const {
   std::array<float, 16> new_values;
   
   for (std::size_t index = 0; index < 4; index++) {
@@ -212,34 +213,41 @@ const matrix_4d matrix_4d::Transpose() const {
 }
 
 const float matrix_4d::Determinant() const {
-  float calculated_determinant;
+  return
+    this->values[3] * this->values[6] * this->values[9] * this->values[12] - this->values[2] * this->values[7] * this->values[9] * this->values[12] - this->values[3] * this->values[5] * this->values[10] * this->values[12] + this->values[1] * this->values[7] * this->values[10] * this->values[12] +
+    this->values[2] * this->values[5] * this->values[11] * this->values[12] - this->values[1] * this->values[6] * this->values[11] * this->values[12] - this->values[3] * this->values[6] * this->values[8] * this->values[13] + this->values[2] * this->values[7] * this->values[8] * this->values[13] +
+    this->values[3] * this->values[4] * this->values[10] * this->values[13] - this->values[0] * this->values[7] * this->values[10] * this->values[13] - this->values[2] * this->values[4] * this->values[11] * this->values[13] + this->values[0] * this->values[6] * this->values[11] * this->values[13] +
+    this->values[3] * this->values[5] * this->values[8] * this->values[14] - this->values[1] * this->values[7] * this->values[8] * this->values[14] - this->values[3] * this->values[4] * this->values[9] * this->values[14] + this->values[0] * this->values[7] * this->values[9] * this->values[14] +
+    this->values[1] * this->values[4] * this->values[11] * this->values[14] - this->values[0] * this->values[5] * this->values[11] * this->values[14] - this->values[2] * this->values[5] * this->values[8] * this->values[15] + this->values[1] * this->values[6] * this->values[8] * this->values[15] +
+    this->values[2] * this->values[4] * this->values[9] * this->values[15] - this->values[0] * this->values[6] * this->values[9] * this->values[15] - this->values[1] * this->values[4] * this->values[10] * this->values[15] + this->values[0] * this->values[5] * this->values[10] * this->values[15];
+}
 
-  calculated_determinant = values[3] * values[6] * values[9] * values[12] -
-                           values[2] * values[7] * values[9] * values[12] -
-                           values[3] * values[5] * values[10] * values[12] +
-                           values[1] * values[7] * values[10] * values[12] +
-                           values[2] * values[5] * values[11] * values[12] -
-                           values[1] * values[6] * values[11] * values[12] -
-                           values[3] * values[6] * values[8] * values[13] +
-                           values[2] * values[7] * values[8] * values[13] +
-                           values[3] * values[4] * values[10] * values[13] -
-                           values[0] * values[7] * values[10] * values[13] -
-                           values[2] * values[4] * values[11] * values[13] +
-                           values[0] * values[6] * values[11] * values[13] +
-                           values[3] * values[5] * values[8] * values[14] -
-                           values[1] * values[7] * values[8] * values[14] -
-                           values[3] * values[4] * values[9] * values[14] +
-                           values[0] * values[7] * values[9] * values[14] +
-                           values[1] * values[4] * values[11] * values[14] -
-                           values[0] * values[5] * values[11] * values[14] -
-                           values[2] * values[5] * values[8] * values[15] +
-                           values[1] * values[6] * values[8] * values[15] +
-                           values[2] * values[4] * values[9] * values[15] -
-                           values[0] * values[6] * values[9] * values[15] -
-                           values[1] * values[4] * values[10] * values[15] +
-                           values[0] * values[5] * values[10] * values[15];
-  
-  return calculated_determinant;
+const matrix_4d matrix_4d::Inverse() const {
+  matrix_4d invert(
+    this->values[6] * this->values[11] * this->values[13] - this->values[7] * this->values[10] * this->values[13] + this->values[7] * this->values[9] * this->values[14] - this->values[5] * this->values[11] * this->values[14] - this->values[6] * this->values[9] * this->values[15] + this->values[5] * this->values[10] * this->values[15],
+    this->values[3] * this->values[10] * this->values[13] - this->values[2] * this->values[11] * this->values[13] - this->values[3] * this->values[9] * this->values[14] + this->values[1] * this->values[11] * this->values[14] + this->values[2] * this->values[9] * this->values[15] - this->values[1] * this->values[10] * this->values[15],
+    this->values[2] * this->values[7] * this->values[13] - this->values[3] * this->values[6] * this->values[13] + this->values[3] * this->values[5] * this->values[14] - this->values[1] * this->values[7] * this->values[14] - this->values[2] * this->values[5] * this->values[15] + this->values[1] * this->values[6] * this->values[15],
+    this->values[3] * this->values[6] * this->values[9] - this->values[2] * this->values[7] * this->values[9] - this->values[3] * this->values[5] * this->values[10] + this->values[1] * this->values[7] * this->values[10] + this->values[2] * this->values[5] * this->values[11] - this->values[1] * this->values[6] * this->values[11],
+    this->values[7] * this->values[10] * this->values[12] - this->values[6] * this->values[11] * this->values[12] - this->values[7] * this->values[8] * this->values[14] + this->values[4] * this->values[11] * this->values[14] + this->values[6] * this->values[8] * this->values[15] - this->values[4] * this->values[10] * this->values[15],
+    this->values[2] * this->values[11] * this->values[12] - this->values[3] * this->values[10] * this->values[12] + this->values[3] * this->values[8] * this->values[14] - this->values[0] * this->values[11] * this->values[14] - this->values[2] * this->values[8] * this->values[15] + this->values[0] * this->values[10] * this->values[15],
+    this->values[3] * this->values[6] * this->values[12] - this->values[2] * this->values[7] * this->values[12] - this->values[3] * this->values[4] * this->values[14] + this->values[0] * this->values[7] * this->values[14] + this->values[2] * this->values[4] * this->values[15] - this->values[0] * this->values[6] * this->values[15],
+    this->values[2] * this->values[7] * this->values[8] - this->values[3] * this->values[6] * this->values[8] + this->values[3] * this->values[4] * this->values[10] - this->values[0] * this->values[7] * this->values[10] - this->values[2] * this->values[4] * this->values[11] + this->values[0] * this->values[6] * this->values[11],
+    this->values[5] * this->values[11] * this->values[12] - this->values[7] * this->values[9] * this->values[12] + this->values[7] * this->values[8] * this->values[13] - this->values[4] * this->values[11] * this->values[13] - this->values[5] * this->values[8] * this->values[15] + this->values[4] * this->values[9] * this->values[15],
+    this->values[3] * this->values[9] * this->values[12] - this->values[1] * this->values[11] * this->values[12] - this->values[3] * this->values[8] * this->values[13] + this->values[0] * this->values[11] * this->values[13] + this->values[1] * this->values[8] * this->values[15] - this->values[0] * this->values[9] * this->values[15],
+    this->values[1] * this->values[7] * this->values[12] - this->values[3] * this->values[5] * this->values[12] + this->values[3] * this->values[4] * this->values[13] - this->values[0] * this->values[7] * this->values[13] - this->values[1] * this->values[4] * this->values[15] + this->values[0] * this->values[5] * this->values[15],
+    this->values[3] * this->values[5] * this->values[8] - this->values[1] * this->values[7] * this->values[8] - this->values[3] * this->values[4] * this->values[9] + this->values[0] * this->values[7] * this->values[9] + this->values[1] * this->values[4] * this->values[11] - this->values[0] * this->values[5] * this->values[11],
+    this->values[6] * this->values[9] * this->values[12] - this->values[5] * this->values[10] * this->values[12] - this->values[6] * this->values[8] * this->values[13] + this->values[4] * this->values[10] * this->values[13] + this->values[5] * this->values[8] * this->values[14] - this->values[4] * this->values[9] * this->values[14],
+    this->values[1] * this->values[10] * this->values[12] - this->values[2] * this->values[9] * this->values[12] + this->values[2] * this->values[8] * this->values[13] - this->values[0] * this->values[10] * this->values[13] - this->values[1] * this->values[8] * this->values[14] + this->values[0] * this->values[9] * this->values[14],
+    this->values[2] * this->values[5] * this->values[12] - this->values[1] * this->values[6] * this->values[12] - this->values[2] * this->values[4] * this->values[13] + this->values[0] * this->values[6] * this->values[13] + this->values[1] * this->values[4] * this->values[14] - this->values[0] * this->values[5] * this->values[14],
+    this->values[1] * this->values[6] * this->values[8] - this->values[2] * this->values[5] * this->values[8] + this->values[2] * this->values[4] * this->values[9] - this->values[0] * this->values[6] * this->values[9] - this->values[1] * this->values[4] * this->values[10] + this->values[0] * this->values[5] * this->values[10]
+  );
+  float inversed_determinant = 1 / invert.Determinant();
+  return matrix_4d::Scaling(
+    inversed_determinant,
+    inversed_determinant,
+    inversed_determinant,
+    inversed_determinant
+  );
 }
 
 const std::array<float, 16> matrix_4d::ColumnMajor() const {
@@ -263,6 +271,27 @@ const std::array<float, 16> matrix_4d::ColumnMajor() const {
   new_values[15] = values[15];
   
   return new_values;
+}
+
+const matrix_3d matrix_4d::Normal() const {
+  matrix_3d this_3d(
+    this->values[0], this->values[1], this->values[2],
+    this->values[4], this->values[5], this->values[6],
+    this->values[8], this->values[9], this->values[10]
+  );
+  matrix_3d normal = matrix_3d(
+    this_3d.values[4] * this_3d.values[8] - this_3d.values[5] * this_3d.values[7],
+    this_3d.values[5] * this_3d.values[6] - this_3d.values[8] * this_3d.values[3],
+    this_3d.values[3] * this_3d.values[7] - this_3d.values[4] * this_3d.values[6],
+    this_3d.values[2] * this_3d.values[7] - this_3d.values[1] * this_3d.values[8],
+    this_3d.values[0] * this_3d.values[8] - this_3d.values[2] * this_3d.values[6],
+    this_3d.values[1] * this_3d.values[6] - this_3d.values[7] * this_3d.values[0],
+    this_3d.values[1] * this_3d.values[5] - this_3d.values[4] * this_3d.values[2],
+    this_3d.values[2] * this_3d.values[3] - this_3d.values[0] * this_3d.values[5],
+    this_3d.values[0] * this_3d.values[4] - this_3d.values[3] * this_3d.values[1]
+  ) / this_3d.Determinant();
+
+  return normal;
 }
 
 const matrix_4d matrix_4d::Scaling(const float& x, const float& y, const float& z, const float& w) {
@@ -344,21 +373,24 @@ const matrix_4d matrix_4d::Rotation(const float& anglex, const float& angley, co
   return matrix_4d::RotationX(anglex) * matrix_4d::RotationY(angley) * matrix_4d::RotationZ(anglez);
 }
 
-const matrix_4d matrix_4d::RotationX(const float& angle) {
+const matrix_4d matrix_4d::RotationX(const float& degree) {
+  float angle = degree * DEGREES_TO_RADIANS;
   return matrix_4d(1.0f, 0.0f      ,  0.0f      , 0.0f,
                   0.0f, cos(angle), -sin(angle), 0.0f,
                   0.0f, sin(angle),  cos(angle), 0.0f,
                   0.0f, 0.0f      ,  0.0f      , 1.0f);
 }
 
-const matrix_4d matrix_4d::RotationY(const float& angle) {
+const matrix_4d matrix_4d::RotationY(const float& degree) {
+  float angle = degree * DEGREES_TO_RADIANS;
   return matrix_4d( cos(angle), 0.0f, sin(angle), 0.0f,
                    0.0f      , 1.0f, 0.0f      , 0.0f,
                   -sin(angle), 0.0f, cos(angle), 0.0f,
                   0.0f       , 0.0f, 0.0f      , 1.0f);
 }
 
-const matrix_4d matrix_4d::RotationZ(const float& angle) {
+const matrix_4d matrix_4d::RotationZ(const float& degree) {
+  float angle = degree * DEGREES_TO_RADIANS;
   return matrix_4d(cos(angle), -sin(angle), 0.0f, 0.0f,
                   sin(angle),  cos(angle), 0.0f, 0.0f,
                   0.0f      ,  0.0f      , 1.0f, 0.0f,

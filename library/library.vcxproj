@@ -129,20 +129,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="include\graphics.hpp" />
+    <ClInclude Include="include\camera.hpp" />
+    <ClInclude Include="include\engine.hpp" />
     <ClInclude Include="include\loaders.hpp" />
-    <ClInclude Include="include\math\matrix_2d.hpp" />
-    <ClInclude Include="include\math\matrix_3d.hpp" />
-    <ClInclude Include="include\math\matrix_4d.hpp" />
-    <ClInclude Include="include\math\matrix_5d.hpp" />
+    <ClInclude Include="include\math\matrix.hpp" />
     <ClInclude Include="include\math\quaternion.hpp" />
     <ClInclude Include="include\math\vector_2d.hpp" />
     <ClInclude Include="include\math\vector_3d.hpp" />
     <ClInclude Include="include\math\vector_4d.hpp" />
+    <ClInclude Include="include\graph_scene.hpp" />
+    <ClInclude Include="include\mouse_picking.hpp" />
     <ClInclude Include="include\physics.hpp" />
+    <ClInclude Include="include\shaders.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\graphics.cpp" />
+    <ClCompile Include="src\camera.cpp" />
+    <ClCompile Include="src\engine.cpp" />
     <ClCompile Include="src\loaders.cpp" />
     <ClCompile Include="src\math\matrix_2d.cpp" />
     <ClCompile Include="src\math\matrix_3d.cpp" />
@@ -152,6 +154,8 @@
     <ClCompile Include="src\math\vector_2d.cpp" />
     <ClCompile Include="src\math\vector_3d.cpp" />
     <ClCompile Include="src\math\vector_4d.cpp" />
+    <ClCompile Include="src\graph_scene.cpp" />
+    <ClCompile Include="src\mouse_picking.cpp" />
     <ClCompile Include="src\physics.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -17,9 +17,9 @@
 #include <deque>
 #include <iterator>
 #include <sstream>
+#include <type_traits>
 
-#include "math/matrix_3d.hpp"
-#include "math/matrix_4d.hpp"
+#include "math/matrix.hpp"
 #include "math/vector_3d.hpp"
 #include "math/quaternion.hpp"
 

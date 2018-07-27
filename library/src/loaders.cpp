@@ -68,12 +68,12 @@ mtl::mtl(std::string filename)
       );
     }
     else if (prefix.compare("d") == 0) {
-      this->Ni.push_back(
+      this->d.push_back(
         std::stof(tokens[0])
       );
     }
     else if (prefix.compare("illum") == 0) {
-      this->Ni.push_back(
+      this->illum.push_back(
         std::stoi(tokens[0])
       );
     }

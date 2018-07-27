@@ -1,6 +1,8 @@
-#include "math/matrix_2d.hpp"
+#include "math/matrix.hpp"
 
 using namespace math;
+
+#define DEGREES_TO_RADIANS 0.01745329251994329547
 
 matrix_2d::matrix_2d(const float& xx, const float& xy,
                           const float& yx, const float& yy)
@@ -213,7 +215,8 @@ const matrix_3d matrix_2d::TranslationY(const float & y) {
   return new_matrix;
 }
 
-const matrix_2d matrix_2d::Rotation(const float& angle) {
+const matrix_2d matrix_2d::Rotation(const float& degree) {
+  float angle = degree * DEGREES_TO_RADIANS;
   return matrix_2d(cos(angle), -sin(angle),
                   sin(angle),  cos(angle));
 }

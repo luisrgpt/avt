@@ -1,106 +1,11 @@
-#include <graphics.hpp>
+﻿#include "engine.hpp"
 
-#include <assimp/Importer.hpp>
-#include <assimp/mesh.h>
-#include <assimp/scene.h>
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 #include <iostream>
 
 using namespace gl;
 
-model::model(
-  scene scene,
-  math::vector_3d scale,
-  math::vector_3d position,
-  math::quaternion orientation,
-  math::vector_3d velocity,
-  math::quaternion rotation)
-  : scene_info(scene)
-  , object(position, orientation, velocity, rotation)
-  , scale(math::matrix_4d::Scaling(scale.x, scale.y, scale.z, 1.0f)) {
-  //std::cout << "quat: " << std::endl;
-  //std::cout << this->object.orientation.x << " " << this->object.orientation.y << " " << this->object.orientation.z << " " << this->object.orientation.w << " " << std::endl;
-  //std::cout << std::endl;
-  //std::cout << "scale: " << std::endl;
-  //std::cout << this->scale[0][0] << " " << this->scale[0][1] << " " << this->scale[0][2] << " " << this->scale[0][3] << " " << std::endl;
-  //std::cout << this->scale[1][0] << " " << this->scale[1][1] << " " << this->scale[1][2] << " " << this->scale[1][3] << " " << std::endl;
-  //std::cout << this->scale[2][0] << " " << this->scale[2][1] << " " << this->scale[2][2] << " " << this->scale[2][3] << " " << std::endl;
-  //std::cout << this->scale[3][0] << " " << this->scale[3][1] << " " << this->scale[3][2] << " " << this->scale[3][3] << " " << std::endl;
-  //std::cout << std::endl;
-}
-view::view(
-  math::vector_3d position,
-  math::quaternion orientation,
-  math::vector_3d velocity,
-  math::quaternion rotation)
-  : object(position, orientation, velocity, rotation)
-  , matrix(math::matrix_4d::View(position, position + orientation * math::vector_3d(0.0f, 0.0f, -1.0f), orientation * math::vector_3d(0.0f, 1.0f, 0.0f))) {
-  //std::cout << "lookat: " << std::endl;
-  //std::cout << this->matrix[0][0] << " " << this->matrix[0][1] << " " << this->matrix[0][2] << " " << this->matrix[0][3] << " " << std::endl;
-  //std::cout << this->matrix[1][0] << " " << this->matrix[1][1] << " " << this->matrix[1][2] << " " << this->matrix[1][3] << " " << std::endl;
-  //std::cout << this->matrix[2][0] << " " << this->matrix[2][1] << " " << this->matrix[2][2] << " " << this->matrix[2][3] << " " << std::endl;
-  //std::cout << this->matrix[3][0] << " " << this->matrix[3][1] << " " << this->matrix[3][2] << " " << this->matrix[3][3] << " " << std::endl;
-  //std::cout << std::endl;
-}
-free_view::free_view(math::vector_3d position, math::vector_3d euler_angle)
-  : position(position)
-  , euler_angle(euler_angle)
-  , matrix(math::matrix_4d::kZero) {
-  math::vector_3d eye = math::vector_3d(0.0f, 0.0f, -1.0f) * math::matrix_3d::Rotation(euler_angle.x, euler_angle.y, euler_angle.z);
-  math::vector_3d up = math::vector_3d(0.0f, 1.0f, 0.0f) * math::matrix_3d::Rotation(euler_angle.x, euler_angle.y, euler_angle.z);
-
-  this->matrix = math::matrix_4d::View(position, position + eye, up);
-}
-projection::projection(
-  projection_type type,
-  float left,
-  float right,
-  float bottom,
-  float top,
-  float z_near,
-  float z_far,
-  math::matrix_4d matrix)
-  : type(type)
-  , left(left)
-  , right(right)
-  , bottom(bottom)
-  , top(top)
-  , z_near(z_near)
-  , z_far(z_far)
-  , matrix(matrix) {}
-orthogonal_projection::orthogonal_projection(
-  float width, float height,
-  float left, float right,
-  float bottom, float top,
-  float z_near, float z_far)
-  : projection(orthogonal, left, right, bottom, top, z_near, z_far, math::matrix_4d::OrthographicProjection(left * width / height, right * width / height, bottom, top, z_near, z_far)) {
-  //std::cout << "orthogonal: " << std::endl;
-  //std::cout << this->matrix[0][0] << " " << this->matrix[0][1] << " " << this->matrix[0][2] << " " << this->matrix[0][3] << " " << std::endl;
-  //std::cout << this->matrix[1][0] << " " << this->matrix[1][1] << " " << this->matrix[1][2] << " " << this->matrix[1][3] << " " << std::endl;
-  //std::cout << this->matrix[2][0] << " " << this->matrix[2][1] << " " << this->matrix[2][2] << " " << this->matrix[2][3] << " " << std::endl;
-  //std::cout << this->matrix[3][0] << " " << this->matrix[3][1] << " " << this->matrix[3][2] << " " << this->matrix[3][3] << " " << std::endl;
-  //std::cout << std::endl;
-}
-perspective_projection::perspective_projection(
-  float width, float height,
-  float fovy,
-  float z_near, float z_far)
-  : projection(perspective, fovy, 0.0f, 0.0f, 0.0f, z_near, z_far, math::matrix_4d::PerspectiveProjection(fovy, width / height, z_near, z_far)) {
-  //std::cout << "frustum: " << std::endl;
-  //std::cout << this->matrix[0][0] << " " << this->matrix[0][1] << " " << this->matrix[0][2] << " " << this->matrix[0][3] << " " << std::endl;
-  //std::cout << this->matrix[1][0] << " " << this->matrix[1][1] << " " << this->matrix[1][2] << " " << this->matrix[1][3] << " " << std::endl;
-  //std::cout << this->matrix[2][0] << " " << this->matrix[2][1] << " " << this->matrix[2][2] << " " << this->matrix[2][3] << " " << std::endl;
-  //std::cout << this->matrix[3][0] << " " << this->matrix[3][1] << " " << this->matrix[3][2] << " " << this->matrix[3][3] << " " << std::endl;
-  //std::cout << std::endl;
-}
-template<class type>
-graph<type>::graph()
-  : root(node{ 0u })
-  , counter(1u)
-  , nodes(std::vector<type>())
-  , edges(std::vector<node>()) {}
-template graph<model>::graph();
 engine::engine(
   int *argc,
   char **argv,
@@ -192,84 +97,10 @@ bool engine::get_left_mouse_state(int button, int state) {
   return false;
 }
 
-void model::execute(kinematic_movement movement) {
-  this->object.execute(movement);
-}
-void view::execute(kinematic_movement movement) {
-  this->object.execute(movement);
-  //std::cout << "before lookat: " << std::endl;
-  //std::cout << this->matrix[0][0] << " " << this->matrix[0][1] << " " << this->matrix[0][2] << " " << this->matrix[0][3] << " " << std::endl;
-  //std::cout << this->matrix[1][0] << " " << this->matrix[1][1] << " " << this->matrix[1][2] << " " << this->matrix[1][3] << " " << std::endl;
-  //std::cout << this->matrix[2][0] << " " << this->matrix[2][1] << " " << this->matrix[2][2] << " " << this->matrix[2][3] << " " << std::endl;
-  //std::cout << this->matrix[3][0] << " " << this->matrix[3][1] << " " << this->matrix[3][2] << " " << this->matrix[3][3] << " " << std::endl;
-  //std::cout << std::endl;
-  this->matrix = math::matrix_4d::View(this->object.position, this->object.position + this->object.orientation * math::vector_3d(0.0f, 0.0f, -1.0f), this->object.orientation * math::vector_3d(0.0f, 1.0f, 0.0f));
-  //std::cout << "after lookat: " << std::endl;
-  //std::cout << this->matrix[0][0] << " " << this->matrix[0][1] << " " << this->matrix[0][2] << " " << this->matrix[0][3] << " " << std::endl;
-  //std::cout << this->matrix[1][0] << " " << this->matrix[1][1] << " " << this->matrix[1][2] << " " << this->matrix[1][3] << " " << std::endl;
-  //std::cout << this->matrix[2][0] << " " << this->matrix[2][1] << " " << this->matrix[2][2] << " " << this->matrix[2][3] << " " << std::endl;
-  //std::cout << this->matrix[3][0] << " " << this->matrix[3][1] << " " << this->matrix[3][2] << " " << this->matrix[3][3] << " " << std::endl;
-  //std::cout << std::endl;
-}
-void free_view::apply_velocity(math::vector_3d velocity) {
-  this->position += velocity;
 
-  math::vector_3d eye = math::vector_3d(0.0f, 0.0f, -1.0f) * math::matrix_3d::Rotation(this->euler_angle.x, this->euler_angle.y, this->euler_angle.z);
-  math::vector_3d up = math::vector_3d(0.0f, 1.0f, 0.0f) * math::matrix_3d::Rotation(this->euler_angle.x, this->euler_angle.y, this->euler_angle.z);
-
-  this->matrix = math::matrix_4d::View(this->position, this->position + eye, up);
-}
-void free_view::apply_rotation(math::vector_3d euler_angle) {
-  this->euler_angle += euler_angle;
-
-  math::vector_3d eye = math::vector_3d(0.0f, 0.0f, -1.0f) * math::matrix_3d::Rotation(this->euler_angle.x, this->euler_angle.y, this->euler_angle.z);
-  math::vector_3d up = math::vector_3d(0.0f, 1.0f, 0.0f) * math::matrix_3d::Rotation(this->euler_angle.x, this->euler_angle.y, this->euler_angle.z);
-
-  this->matrix = math::matrix_4d::View(this->position, this->position + eye, up);
-}
-void projection::reshape(float width, float height) {
+void engine::reshape(float width, float height) {
   glViewport(0, 0, width, height);
-
-  float ratio = width / height;
-  if (this->type == perspective) {
-    this->matrix = math::matrix_4d::PerspectiveProjection(
-      this->left, //fovy
-      ratio,
-      this->z_near, this->z_far
-    );
-  }
-  else {
-    this->matrix = math::matrix_4d::OrthographicProjection(
-      this->left * ratio, this->right * ratio,
-      this->bottom, this->top,
-      this->z_near, this->z_far
-    );
-  }
 }
-
-template<class type>
-node* graph<type>::set_root(type content) {
-  node* root = new node{ this->counter++ };
-  this->nodes.push_back(content);
-  this->edges.push_back(this->root);
-
-  return root;
-}
-template<class type>
-node* graph<type>::set_child(node parent, type content) {
-  node* child = new node{ this->counter++ };
-  this->nodes.push_back(content);
-  this->edges.push_back(parent);
-
-  return child;
-}
-template<class type>
-type& graph<type>::get(node node) {
-  return nodes[node.id];
-}
-template node* graph<model>::set_root(model);
-template node* graph<model>::set_child(node, model);
-template model& graph<model>::get(node);
 
 void engine::set_close_callback(void(*handler)(void)) {
   glutCloseFunc(handler);
@@ -400,10 +231,15 @@ void engine::link(program program) {
   }
   assert(glGetError() == GL_NO_ERROR);
 
+  GLint test;
+  glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &test);
+  std::cout << "GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT  " << test << std::endl;
+
   this->program_ids.insert(this->program_ids.begin() + program.id, true);
 }
 
-scene* engine::load_scene(program program, loader::obj obj, loader::mtl mtl, uniform_block mvp, uniform_block material) {
+template<class vertex, class fragment>
+scene* engine::load_scene(program program, loader::obj obj, loader::mtl mtl) {
   assert(this->program_ids.size() > program.id && this->program_ids[program.id]);
 
   unsigned id;
@@ -475,22 +311,27 @@ scene* engine::load_scene(program program, loader::obj obj, loader::mtl mtl, uni
       assert(glGetError() == GL_NO_ERROR);
     }
 
+    constexpr unsigned size =
+    (
+      sizeof(vertex) == 1
+      ? 0
+      : sizeof(vertex) % 16 != 0
+      ? (sizeof(vertex) / 16 + 1) * 16
+      : sizeof(vertex)
+    ) + (
+      sizeof(fragment) == 1
+      ? 0
+      : sizeof(fragment) % 16 != 0
+      ? (sizeof(fragment) / 16 + 1) * 16
+      : sizeof(fragment)
+    );
+
     // Generate uniform buffer
     unsigned mvp_id;
     glGenBuffers(1, &mvp_id);
-    glBindBuffer(GL_UNIFORM_BUFFER, mvp_id);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(float) * 16 * 3, 0, GL_STREAM_DRAW);
-    glBindBufferBase(GL_UNIFORM_BUFFER, 0u, mvp_id);
-    glUniformBlockBinding(program.id, mvp.id, GL_ZERO);
-    assert(glGetError() == GL_NO_ERROR);
-
-    // Generate uniform buffer
-    unsigned material_id;
-    glGenBuffers(1, &material_id);
-    glBindBuffer(GL_UNIFORM_BUFFER, material_id);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(float) * 13 + sizeof(int), 0, GL_STREAM_DRAW);
-    glBindBufferBase(GL_UNIFORM_BUFFER, 0u, material_id);
-    glUniformBlockBinding(program.id, material.id, GL_ZERO);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, mvp_id);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 1, mvp_id);
+    glBufferData(GL_UNIFORM_BUFFER, size, 0, GL_STATIC_DRAW);
     assert(glGetError() == GL_NO_ERROR);
 
     // unbind buffers
@@ -499,20 +340,41 @@ scene* engine::load_scene(program program, loader::obj obj, loader::mtl mtl, uni
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     assert(glGetError() == GL_NO_ERROR);
 
+    constexpr vertex_type vertex_type
+      = std::is_same<vertex, none>::value ? v_none
+      : std::is_same<vertex, mvp>::value ? v_mvp
+      : v_blinn_phong_vertex;
+
+    constexpr fragment_type fragment_type
+      = std::is_same<vertex, none>::value ? f_none
+      : f_blinn_phong_fragment;
+
     this->mesh_ids.insert(this->mesh_ids.begin() + id, true);
     std::string usemtl = obj.usemtl[n];
     if (mtl.filename.find(obj.mtllib) != std::string::npos && usemtl.compare("None") != 0) {
       for (auto i = 0u; i < mtl.newmtl.size(); i++) {
         if (mtl.newmtl[i].compare(usemtl) == 0) {
+          //std::cout << usemtl << std::endl;
+          //std::cout << "Ka " << mtl.Ka[i][0] << " " << mtl.Ka[i][1] << " " << mtl.Ka[i][2] << " " << std::endl;
+          //std::cout << "Kd " << mtl.Kd[i][0] << " " << mtl.Kd[i][1] << " " << mtl.Kd[i][2] << " " << std::endl;
+          //std::cout << "Ks " << mtl.Ks[i][0] << " " << mtl.Ks[i][1] << " " << mtl.Ks[i][2] << " " << std::endl;
+          //std::cout << "Ke " << mtl.Ke[i][0] << " " << mtl.Ke[i][1] << " " << mtl.Ke[i][2] << " " << std::endl;
+          //std::cout << "Ni " << mtl.Ni[i] << " " << std::endl;
+          //std::cout << std::endl;
+
           scene->push_back(
             mesh{
+              false,
+              vertex_type,
+              fragment_type,
+
               id,
               obj.f[n].size(),
               program.id,
               0,
               0,
               mvp_id,
-              material_id,
+              mvp_id,
 
               true,
               mtl.Ka[i],
@@ -530,6 +392,10 @@ scene* engine::load_scene(program program, loader::obj obj, loader::mtl mtl, uni
     else {
       scene->push_back(
         mesh{
+          false,
+          vertex_type,
+          fragment_type,
+
           id,
           obj.f[n].size(),
           program.id,
@@ -543,7 +409,7 @@ scene* engine::load_scene(program program, loader::obj obj, loader::mtl mtl, uni
   }
   return scene;
 }
-
+template scene* engine::load_scene<blinn_phong_vertex, blinn_phong_fragment>(program program, loader::obj obj, loader::mtl mtl);
 void engine::use(program program) {
   assert(this->program_ids.size() > program.id && this->program_ids[program.id]);
 
@@ -660,7 +526,8 @@ void engine::draw(mesh scene) {
 }
 void engine::draw(
   graph<model> scene_graph,
-  camera camera) {
+  camera camera
+) {
   this->draw(
     std::cref(scene_graph),
     std::cref(camera.projection.matrix),
@@ -669,7 +536,8 @@ void engine::draw(
 }
 void engine::draw(
   graph<model> scene_graph,
-  free_camera camera) {
+  free_camera camera
+) {
   this->draw(
     std::cref(scene_graph),
     std::cref(camera.projection.matrix),
@@ -681,54 +549,36 @@ void engine::draw(
   math::matrix_4d projection,
   math::matrix_4d view
 ) {
-  std::vector<math::matrix_4d> translations;
-  std::vector<math::matrix_4d> rotations;
-  std::vector<math::matrix_4d> scalations;
+  illumination lights;
+  std::vector<math::matrix_4d> translations = { math::matrix_4d::kIdentity };
+  std::vector<math::matrix_4d> rotations = { math::matrix_4d::kIdentity };
+  std::vector<math::matrix_4d> scalations = { math::matrix_4d::kIdentity };
 
-  math::matrix_4d translation = math::matrix_4d::kIdentity;
-  math::matrix_4d rotation = math::matrix_4d::kIdentity;
-  math::matrix_4d scalation = math::matrix_4d::kIdentity;
-
-  translations.push_back(math::matrix_4d::kIdentity);
-  rotations.push_back(math::matrix_4d::kIdentity);
-  scalations.push_back(math::matrix_4d::kIdentity);
-
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-  for (auto i = 0u; i < scene_graph.nodes.size(); i++) {
-    auto model = scene_graph.nodes[i];
+  // Calculate matrices
+  for (auto i = 1u; i < scene_graph.nodes.size(); i++) {
+    auto node = scene_graph.nodes[i].value();
     auto parent_id = scene_graph.edges[i].id;
 
-    math::matrix_4d buffer = math::matrix_4d(model.object.orientation);
-    translation = math::matrix_3d::Translation(model.object.position.x, model.object.position.y, model.object.position.z) * translations[parent_id];
-    rotation = math::matrix_4d(model.object.orientation) * rotations[parent_id];
-    scalation = model.scale * scalations[parent_id];
+    translations.push_back(math::matrix_3d::Translation(node.object.position.x, node.object.position.y, node.object.position.z) * translations[parent_id]);
+    rotations.push_back(math::matrix_4d(node.object.orientation) * rotations[parent_id]);
+    scalations.push_back(node.scale * scalations[parent_id]);
 
-    //math::matrix_4d buffer = math::matrix_4d(model.object.orientation);
-    //std::cout << "rotation: " << std::endl;
-    //std::cout << buffer[0][0] << " " << buffer[0][1] << " " << buffer[0][2] << " " << buffer[0][3] << " " << std::endl;
-    //std::cout << buffer[1][0] << " " << buffer[1][1] << " " << buffer[1][2] << " " << buffer[1][3] << " " << std::endl;
-    //std::cout << buffer[2][0] << " " << buffer[2][1] << " " << buffer[2][2] << " " << buffer[2][3] << " " << std::endl;
-    //std::cout << buffer[3][0] << " " << buffer[3][1] << " " << buffer[3][2] << " " << buffer[3][3] << " " << std::endl;
-    //std::cout << std::endl;
+    if (node.scene_info[0].is_light) {
+      math::vector_4d vector4(node.object.position.x, node.object.position.y, node.object.position.z, 1.0f);
+      vector4 = translations.back() * vector4;
+      lights.push_back(math::vector_3d(vector4.x, vector4.y, vector4.z));
+      //std::cout << light.x << " " << light.y << " " << light.z << std::endl;
+    }
+  }
 
-    //buffer = math::matrix_3d::Translation(model.object.position.x, model.object.position.y, model.object.position.z);
-    //std::cout << "translation: " << std::endl;
-    //std::cout << buffer[0][0] << " " << buffer[0][1] << " " << buffer[0][2] << " " << buffer[0][3] << " " << std::endl;
-    //std::cout << buffer[1][0] << " " << buffer[1][1] << " " << buffer[1][2] << " " << buffer[1][3] << " " << std::endl;
-    //std::cout << buffer[2][0] << " " << buffer[2][1] << " " << buffer[2][2] << " " << buffer[2][3] << " " << std::endl;
-    //std::cout << buffer[3][0] << " " << buffer[3][1] << " " << buffer[3][2] << " " << buffer[3][3] << " " << std::endl;
-    //std::cout << std::endl;
+  // Draw meshes
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  for (auto i = 1u; i < scene_graph.nodes.size(); i++) {
+    for (auto mesh : scene_graph.nodes[i].value().scene_info) {
+      if (mesh.is_light) {
+        continue;
+      }
 
-    //buffer = math::matrix_3d::Translation(model.object.position.x, model.object.position.y, model.object.position.z) * translations[parent_id];
-    //std::cout << "multiplication: " << std::endl;
-    //std::cout << buffer[0][0] << " " << buffer[0][1] << " " << buffer[0][2] << " " << buffer[0][3] << " " << std::endl;
-    //std::cout << buffer[1][0] << " " << buffer[1][1] << " " << buffer[1][2] << " " << buffer[1][3] << " " << std::endl;
-    //std::cout << buffer[2][0] << " " << buffer[2][1] << " " << buffer[2][2] << " " << buffer[2][3] << " " << std::endl;
-    //std::cout << buffer[3][0] << " " << buffer[3][1] << " " << buffer[3][2] << " " << buffer[3][3] << " " << std::endl;
-    //std::cout << std::endl;
-
-    for (auto mesh : model.scene_info) {
       if (this->current_program_id != mesh.program_id) {
         assert(
           this->program_ids.size() > mesh.program_id &&
@@ -759,31 +609,60 @@ void engine::draw(
       //  scalation
       //);
 
-      glBindBuffer(GL_UNIFORM_BUFFER, mesh.mvp_id);
-      glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(float) * 16, projection.values.data());
-      glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 16, sizeof(float) * 16, view.values.data());
-      glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 32, sizeof(float) * 16, (translation * rotation * scalation).values.data());
-      glBindBuffer(GL_UNIFORM_BUFFER, mesh.material_id);
-      glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(float) * 3, mesh.ambient.data());
-      glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 3, sizeof(float) * 3, mesh.diffuse.data());
-      glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 6, sizeof(float) * 3, mesh.specular.data());
-      glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 9, sizeof(float) * 3, mesh.emissive.data());
-      glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 12, sizeof(float), &mesh.shininess);
-      glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 13, sizeof(int), &mesh.n_textures);
-      glBindBuffer(GL_UNIFORM_BUFFER, GL_ZERO);
-      assert(glGetError() == GL_NO_ERROR);
+      switch (mesh.vertex_type) {
+      case v_none:
+        
+        break;
+      case v_mvp:
+
+        break;
+      case v_blinn_phong_vertex:
+        this->set_blinn_phong(
+          mesh, lights,
+          projection,
+          view,
+          translations[i],
+          rotations[i],
+          scalations[i]
+        );
+        break;
+      }
 
       glDrawArrays(GL_TRIANGLES, 0, (GLsizei)mesh.n_faces * 3);
       assert(glGetError() == GL_NO_ERROR);
     }
-
-    translations.push_back(translation);
-    rotations.push_back(rotation);
-    scalations.push_back(scalation);
   }
-
   glutSwapBuffers();
 }
+
+void engine::set_blinn_phong(
+  mesh mesh,
+  illumination lights,
+  math::matrix_4d projection,
+  math::matrix_4d view,
+  math::matrix_4d translation,
+  math::matrix_4d rotation,
+  math::matrix_4d scalation
+) {
+  math::matrix_4d model = translation * rotation * scalation;
+
+  glBindBufferRange(GL_UNIFORM_BUFFER, 0, mesh.vertex, 0, sizeof(float) * 60);
+  glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(float) * 16, model.values.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 16, sizeof(float) * 16, view.values.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 32, sizeof(float) * 16, projection.values.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 48, sizeof(float) * 9, (view * model).Normal().values.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 57, sizeof(float) * 3, std::vector<float>{lights[0].x, lights[0].y, lights[0].z}.data());
+  glBindBufferRange(GL_UNIFORM_BUFFER, 1, mesh.fragment, sizeof(float) * 60, sizeof(float) * 13 + sizeof(int));
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 60, sizeof(float) * 3, mesh.ambient.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 63, sizeof(float) * 3, mesh.diffuse.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 66, sizeof(float) * 3, mesh.specular.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 69, sizeof(float) * 3, mesh.emissive.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 72, sizeof(float), &mesh.shininess);
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 73, sizeof(int), &mesh.n_textures);
+  glBindBuffer(GL_UNIFORM_BUFFER, GL_ZERO);
+  assert(glGetError() == GL_NO_ERROR);
+}
+
 
 void engine::unbind() {
   glBindVertexArray(0);
