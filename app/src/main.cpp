@@ -23,6 +23,7 @@ std::vector<gl::free_camera> free_cameras;
 fs::mtl *random_materials;
 gl::node *node_field;
 gl::node *node_light;
+gl::node *picked_node;
 unsigned current_projection;
 unsigned current_view;
 unsigned current_mode;
@@ -88,7 +89,7 @@ void keyboard(unsigned char key, int x, int y) {
       }
     }
     else {
-      scene_graph->nodes[node_field->id].value().object.position += math::vector_3d(-1.0f, 0.0f, 0.0f);
+      scene_graph->nodes[picked_node->id].value().object.position += math::vector_3d(-1.0f, 0.0f, 0.0f);
     }
     break;
   case 'd':
@@ -101,7 +102,7 @@ void keyboard(unsigned char key, int x, int y) {
       }
     }
     else {
-      scene_graph->nodes[node_field->id].value().object.position += math::vector_3d(1.0f, 0.0f, 0.0f);
+      scene_graph->nodes[picked_node->id].value().object.position += math::vector_3d(1.0f, 0.0f, 0.0f);
     }
     break;
   case 's':
@@ -114,7 +115,7 @@ void keyboard(unsigned char key, int x, int y) {
       }
     }
     else {
-      scene_graph->nodes[node_field->id].value().object.position += math::vector_3d(0.0f, -1.0f, 0.0f);
+      scene_graph->nodes[picked_node->id].value().object.position += math::vector_3d(0.0f, -1.0f, 0.0f);
     }
     break;
   case 'w':
@@ -127,7 +128,7 @@ void keyboard(unsigned char key, int x, int y) {
       }
     }
     else {
-      scene_graph->nodes[node_field->id].value().object.position += math::vector_3d(0.0f, 1.0f, 0.0f);
+      scene_graph->nodes[picked_node->id].value().object.position += math::vector_3d(0.0f, 1.0f, 0.0f);
     }
     break;
   case 'q':
@@ -140,7 +141,7 @@ void keyboard(unsigned char key, int x, int y) {
       }
     }
     else {
-      scene_graph->nodes[node_field->id].value().object.position += math::vector_3d(0.0f, 0.0f, -1.0f);
+      scene_graph->nodes[picked_node->id].value().object.position += math::vector_3d(0.0f, 0.0f, -1.0f);
     }
     break;
   case 'e':
@@ -153,7 +154,7 @@ void keyboard(unsigned char key, int x, int y) {
       }
     }
     else {
-      scene_graph->nodes[node_field->id].value().object.position += math::vector_3d(0.0f, 0.0f, 1.0f);
+      scene_graph->nodes[picked_node->id].value().object.position += math::vector_3d(0.0f, 0.0f, 1.0f);
     }
     break;
 
@@ -183,57 +184,86 @@ void keyboard(unsigned char key, int x, int y) {
     break;
 
   case 'j':
-    for (auto &camera : cameras) {
-      camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(0.0f, 1.0f, 0.0f)), 1));
+    if (current_mode == 0) {
+      for (auto &camera : cameras) {
+        camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(0.0f, 1.0f, 0.0f)), 1));
+      }
+      for (auto &camera : free_cameras) {
+        camera.view.apply_rotation(math::vector_3d(0.0f, 1.0f, 0.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
+      }
     }
-    for (auto &camera : free_cameras) {
-      camera.view.apply_rotation(math::vector_3d(0.0f, 1.0f, 0.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
+    else {
+      scene_graph->nodes[picked_node->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(0.0f, 1.0f, 0.0f)), 1));
     }
     break;
   case 'l':
-    for (auto &camera : cameras) {
-      camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(0.0f, -1.0f, 0.0f)), 1));
+    if (current_mode == 0) {
+      for (auto &camera : cameras) {
+        camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(0.0f, -1.0f, 0.0f)), 1));
+      }
+      for (auto &camera : free_cameras) {
+        camera.view.apply_rotation(math::vector_3d(0.0f, -1.0f, 0.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
+      }
     }
-    for (auto &camera : free_cameras) {
-      camera.view.apply_rotation(math::vector_3d(0.0f, -1.0f, 0.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
+    else {
+      scene_graph->nodes[picked_node->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(0.0f, -1.0f, 0.0f)), 1));
     }
     break;
   case 'k':
-    for (auto &camera : cameras) {
-      camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(-1.0f, 0.0f, 0.0f)), 1));
+    if (current_mode == 0) {
+      for (auto &camera : cameras) {
+        camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(-1.0f, 0.0f, 0.0f)), 1));
+      }
+      for (auto &camera : free_cameras) {
+        camera.view.apply_rotation(math::vector_3d(-1.0f, 0.0f, 0.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
+      }
     }
-    for (auto &camera : free_cameras) {
-      camera.view.apply_rotation(math::vector_3d(-1.0f, 0.0f, 0.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
+    else {
+      scene_graph->nodes[picked_node->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(-1.0f, 0.0f, 0.0f)), 1));
     }
     break;
   case 'i':
-    for (auto &camera : cameras) {
-      camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(1.0f, 0.0f, 0.0f)), 1));
+    if (current_mode == 0) {
+      for (auto &camera : cameras) {
+        camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(1.0f, 0.0f, 0.0f)), 1));
+      }
+      for (auto &camera : free_cameras) {
+        camera.view.apply_rotation(math::vector_3d(1.0f, 0.0f, 0.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
+      }
     }
-    for (auto &camera : free_cameras) {
-      camera.view.apply_rotation(math::vector_3d(1.0f, 0.0f, 0.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
+    else {
+      scene_graph->nodes[picked_node->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(1.0f, 0.0f, 0.0f)), 1));
     }
     break;
   case 'u':
-    for (auto &camera : cameras) {
-      camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(0.0f, 0.0f, 1.0f)), 1));
+    if (current_mode == 0) {
+      for (auto &camera : cameras) {
+        camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(0.0f, 0.0f, 1.0f)), 1));
+      }
+      for (auto &camera : free_cameras) {
+        camera.view.apply_rotation(math::vector_3d(0.0f, 0.0f, 1.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
+      }
     }
-    for (auto &camera : free_cameras) {
-      camera.view.apply_rotation(math::vector_3d(0.0f, 0.0f, 1.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
+    else {
+      scene_graph->nodes[picked_node->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(0.0f, 0.0f, 1.0f)), 1));
     }
     break;
   case 'o':
-    for (auto &camera : cameras) {
-      camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(0.0f, 0.0f, -1.0f)), 1));
+    if (current_mode == 0) {
+      for (auto &camera : cameras) {
+        camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(0.0f, 0.0f, -1.0f)), 1));
+      }
+      for (auto &camera : free_cameras) {
+        camera.view.apply_rotation(math::vector_3d(0.0f, 0.0f, -1.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
+      }
     }
-    for (auto &camera : free_cameras) {
-      camera.view.apply_rotation(math::vector_3d(0.0f, 0.0f, -1.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
+    else {
+      scene_graph->nodes[picked_node->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(0.0f, 0.0f, -1.0f)), 1));
     }
     break;
-  }
+    }
 }
 
-gl::node *picked_node;
 float state_x;
 float state_y;
 bool got_picked = false;
@@ -391,7 +421,7 @@ int main(int argc, char **argv) {
       math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
     )
   );
-  scene_graph->set_child(
+  picked_node = scene_graph->set_child(
     *node_field,
     gl::model(
       *ship,
