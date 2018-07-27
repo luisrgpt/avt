@@ -131,7 +131,7 @@
   <ItemGroup>
     <ClInclude Include="include\camera.hpp" />
     <ClInclude Include="include\engine.hpp" />
-    <ClInclude Include="include\loaders.hpp" />
+    <ClInclude Include="include\importers.hpp" />
     <ClInclude Include="include\math\matrix.hpp" />
     <ClInclude Include="include\math\quaternion.hpp" />
     <ClInclude Include="include\math\vector_2d.hpp" />
@@ -145,7 +145,7 @@
   <ItemGroup>
     <ClCompile Include="src\camera.cpp" />
     <ClCompile Include="src\engine.cpp" />
-    <ClCompile Include="src\loaders.cpp" />
+    <ClCompile Include="src\importers.cpp" />
     <ClCompile Include="src\math\matrix_2d.cpp" />
     <ClCompile Include="src\math\matrix_3d.cpp" />
     <ClCompile Include="src\math\matrix_4d.cpp" />

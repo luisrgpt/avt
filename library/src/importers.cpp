@@ -1,6 +1,6 @@
-#include "loaders.hpp"
+#include "importers.hpp"
 
-using namespace loader;
+using namespace fs;
 
 mtl::mtl(std::string filename)
   : filename(filename)
@@ -10,8 +10,11 @@ mtl::mtl(std::string filename)
   , Ks(std::vector<std::array<float, 3>>())
   , Ke(std::vector<std::array<float, 3>>())
   , Ni(std::vector<float>())
+  , Ns(std::vector<float>())
+  , Tr(std::vector<float>())
   , d(std::vector<float>())
   , illum(std::vector<int>())
+  , map_Kd(std::vector<std::string>())
 {
   std::ifstream file(filename);
   std::string line;
@@ -67,6 +70,16 @@ mtl::mtl(std::string filename)
         std::stof(tokens[0])
       );
     }
+    else if (prefix.compare("Ns") == 0) {
+      this->Ns.push_back(
+        std::stof(tokens[0])
+      );
+    }
+    else if (prefix.compare("Tr") == 0) {
+      this->Tr.push_back(
+        std::stof(tokens[0])
+      );
+    }
     else if (prefix.compare("d") == 0) {
       this->d.push_back(
         std::stof(tokens[0])
@@ -75,6 +88,11 @@ mtl::mtl(std::string filename)
     else if (prefix.compare("illum") == 0) {
       this->illum.push_back(
         std::stoi(tokens[0])
+      );
+    }
+    else if (prefix.compare("map_Kd") == 0) {
+      this->map_Kd.push_back(
+        tokens[0]
       );
     }
   }
@@ -107,7 +125,6 @@ std::array<int, 3> parse_obj_f(std::string token)
   }
   return f;
 }
-
 obj::obj(std::string filename)
   : filename(filename)
   , o(std::vector<std::string>())
@@ -136,6 +153,11 @@ obj::obj(std::string filename)
     tokens.pop_front();
     if (prefix.compare("mtllib") == 0) {
       this->mtllib = tokens[0];
+    }
+    if (prefix.compare("s") == 0) {
+      this->s.push_back(
+        tokens[0]
+      );
     }
     else if (prefix.compare("o") == 0) {
       this->o.push_back(
@@ -180,4 +202,78 @@ obj::obj(std::string filename)
       }
     }
   }
+}
+
+void mtl::save(std::string filename)
+{
+  std::ofstream file(filename, std::ios::binary);
+
+  for (auto i = 0u; i < this->newmtl.size(); i++) {
+    file << "newmtl " << newmtl[i] << std::endl;
+    if (i < Ns.size()) {
+      file << "Ns " << Ns[i] << std::endl;
+    }
+    if (i < Ka.size()) {
+      file << "Ka " << Ka[i][0] << " " << Ka[i][1] << " " << Ka[i][2] << std::endl;
+    }
+    if (i < Kd.size()) {
+      file << "Kd " << Kd[i][0] << " " << Kd[i][1] << " " << Kd[i][2] << std::endl;
+    }
+    if (i < Ks.size()) {
+      file << "Ks " << Ks[i][0] << " " << Ks[i][1] << " " << Ks[i][2] << std::endl;
+    }
+    if (i < Ke.size()) {
+      file << "Ke " << Ke[i][0] << " " << Ke[i][1] << " " << Ke[i][2] << std::endl;
+    }
+    if (i < Ni.size()) {
+      file << "Ni " << Ni[i] << std::endl;
+    }
+    if (i < Tr.size()) {
+      file << "Tr " << Tr[i] << std::endl;
+    }
+    if (i < d.size()) {
+      file << "d " << d[i] << std::endl;
+    }
+    if (i < illum.size()) {
+      file << "illum " << illum[i] << std::endl;
+    }
+    if (i < map_Kd.size()) {
+      file << "map_Kd " << map_Kd[i] << std::endl;
+    }
+    file << std::endl;
+  }
+
+  file.close();
+}
+
+std::string to_string(const std::array<int, 3>& x) {
+  return (x[0] == 0 ? "" : std::to_string(x[0])) + "/"
+       + (x[1] == 0 ? "" : std::to_string(x[1])) + "/"
+       + (x[2] == 0 ? "" : std::to_string(x[2]));
+}
+
+void obj::save(std::string filename)
+{
+  std::ofstream file(filename, std::ios::binary);
+
+  file << "mtllib " << mtllib << std::endl;
+  for (auto i = 0u; i < this->o.size(); i++) {
+    file << "o " << o[i] << std::endl;
+    for (auto x : v) {
+      file << "v " << x[0] << " " << x[1] << " " << x[2] << std::endl;
+    }
+    for (auto x : vn) {
+      file << "vn " << x[0] << " " << x[1] << " " << x[2] << std::endl;
+    }
+    for (auto x : vt) {
+      file << "vt " << x[0] << " " << x[1] << std::endl;
+    }
+    file << "usemtl " << usemtl[i] << std::endl;
+    file << "s " << s[i] << std::endl;
+    for (auto x = 0u; x < f[i].size() / 3; x++) {
+      file << "f " << to_string(f[i][x * 3]) << " " << to_string(f[i][x * 3 + 1]) << " " << to_string(f[i][x * 3 + 2]) << std::endl;
+    }
+  }
+
+  file.close();
 }

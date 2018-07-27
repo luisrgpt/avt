@@ -239,7 +239,7 @@ void engine::link(program program) {
 }
 
 template<class vertex, class fragment>
-scene* engine::load_scene(program program, loader::obj obj, loader::mtl mtl) {
+scene* engine::load_scene(program program, fs::obj obj, fs::mtl mtl) {
   assert(this->program_ids.size() > program.id && this->program_ids[program.id]);
 
   unsigned id;
@@ -409,7 +409,7 @@ scene* engine::load_scene(program program, loader::obj obj, loader::mtl mtl) {
   }
   return scene;
 }
-template scene* engine::load_scene<blinn_phong_vertex, blinn_phong_fragment>(program program, loader::obj obj, loader::mtl mtl);
+template scene* engine::load_scene<blinn_phong_vertex, blinn_phong_fragment>(program program, fs::obj obj, fs::mtl mtl);
 void engine::use(program program) {
   assert(this->program_ids.size() > program.id && this->program_ids[program.id]);
 

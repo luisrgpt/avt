@@ -315,13 +315,13 @@ int main(int argc, char **argv) {
   engine->load_shader<gl::fragment>(*program, "share/texture.frag");
   engine->link(*program);
 
-  loader::mtl materials("share/materials.mtl");
-  loader::obj obj_field("share/field.obj");
-  loader::obj obj_ship("share/ship.obj");
-  loader::obj obj_ball("share/ball.obj");
-  loader::obj obj_box("share/box.obj");
-  loader::obj obj_pipe("share/big_pipe.obj");
-  loader::obj obj_border("share/border.obj");
+  fs::mtl materials("share/materials.mtl");
+  fs::obj obj_field("share/field.obj");
+  fs::obj obj_ship("share/ship.obj");
+  fs::obj obj_ball("share/ball.obj");
+  fs::obj obj_box("share/box.obj");
+  fs::obj obj_pipe("share/big_pipe.obj");
+  fs::obj obj_border("share/border.obj");
 
   gl::scene *field = engine->load_scene<gl::blinn_phong_vertex, gl::blinn_phong_fragment>(*program, obj_field, materials);
   gl::scene *ship = engine->load_scene<gl::blinn_phong_vertex, gl::blinn_phong_fragment>(*program, obj_ship, materials);

@@ -4,7 +4,7 @@
 #define GRAPHICS
 
 /////////////////////////////////////////////////////////////////////// DEPENDENCIES
-#include "loaders.hpp"
+#include "importers.hpp"
 #include "shaders.hpp"
 #include "camera.hpp"
 #include "graph_scene.hpp"
@@ -88,7 +88,7 @@ namespace gl {
     void link(program);
 
     template<class vertex, class fragment>
-    scene* load_scene(program, loader::obj, loader::mtl);
+    scene* load_scene(program, fs::obj, fs::mtl);
 
     void use(program);
     void bind(mesh);

@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////// HEADER GUARDS
 #pragma once
-#ifndef LOADERS
-#define LOADERS
+#ifndef IMPORTERS
+#define IMPORTERS
 
 /////////////////////////////////////////////////////////////////////// DEPENDENCIES
 #include <cassert>
@@ -18,7 +18,7 @@
 #include <sstream>
 
 /////////////////////////////////////////////////////////////////////// NAMESPACE
-namespace loader {
+namespace fs {
   struct mtl {
     std::string filename;
     std::vector<std::string> newmtl;
@@ -27,9 +27,15 @@ namespace loader {
     std::vector<std::array<float, 3>> Ks;
     std::vector<std::array<float, 3>> Ke;
     std::vector<float> Ni;
+    std::vector<float> Ns;
+    std::vector<float> Tr;
     std::vector<float> d;
     std::vector<int> illum;
+    std::vector<std::string> map_Kd;
+
     mtl(std::string);
+
+    void save(std::string);
   };
 
   struct obj {
@@ -41,7 +47,11 @@ namespace loader {
     std::vector<std::array<float, 2>> vt;
     std::vector<std::string> usemtl;
     std::vector<std::vector<std::array<int, 3>>> f;
+    std::vector<std::string> s;
+
     obj(std::string);
+
+    void save(std::string);
   };
 };
 
