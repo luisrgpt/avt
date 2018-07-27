@@ -355,7 +355,7 @@ int main(int argc, char **argv) {
     gl::model(
       *field,
       math::vector_3d(1, 1, 1),
-      math::vector_3d(13.5f, 14.5f, 0.0f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
+      math::vector_3d(-23.5f, 14.5f, 0.0f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
       math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
     )
   );
@@ -436,7 +436,7 @@ int main(int argc, char **argv) {
   cameras = {
     gl::camera{
       gl::view(
-        math::vector_3d(13.5f, 15.0f, 30.0f), math::quaternion(0, math::vector_3d(1.0f, 0.0f, 0.0f)),
+        math::vector_3d(-23.5f, 15.0f, 30.0f), math::quaternion(0, math::vector_3d(1.0f, 0.0f, 0.0f)),
         math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
       ),
       gl::perspective_projection(
@@ -447,7 +447,7 @@ int main(int argc, char **argv) {
     },
     gl::camera{
       gl::view(
-        math::vector_3d(13.5f, 15.0f, 30.0f), math::quaternion(0, math::vector_3d(1.0f, 0.0f, 0.0f)),
+        math::vector_3d(-23.5f, 15.0f, 30.0f), math::quaternion(0, math::vector_3d(1.0f, 0.0f, 0.0f)),
         math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
       ),
       gl::orthogonal_projection(
@@ -462,7 +462,7 @@ int main(int argc, char **argv) {
   free_cameras = {
     gl::free_camera{
       gl::free_view(
-        math::vector_3d(13.5f, 15.0f, 30.0f),
+        math::vector_3d(-23.5f, 15.0f, 30.0f),
         math::vector_3d(0, 0, 0)
       ),
       gl::perspective_projection(
@@ -473,7 +473,7 @@ int main(int argc, char **argv) {
     },
     gl::free_camera{
       gl::free_view(
-        math::vector_3d(13.5f, 15.0f, 30.0f),
+        math::vector_3d(-23.5f, 15.0f, 30.0f),
         math::vector_3d(0, 0, 0)
       ),
       gl::orthogonal_projection(
