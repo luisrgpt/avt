@@ -12,8 +12,8 @@
 constexpr unsigned
 fps = 60,
 mhz = 1000 / fps,
-width = 640,
-height = 480;
+width = 1000,
+height = 800;
 
 gl::engine *engine;
 gl::program *program;
@@ -33,6 +33,15 @@ void close() {
 void idle() {}
 void keyboard(unsigned char key, int x, int y) {
   switch (key) {
+  case 'x':
+    delete engine;
+    break;
+  case 'b':
+    gl::bltz::save(*scene_graph, "test.krg");
+    break;
+  case 'n':
+    scene_graph = gl::bltz::load("test.krg");
+    break;
   case 'g':
     if (current_view == 0) {
       current_view = 1;
@@ -173,8 +182,8 @@ bool got_picked = false;
 void motion(int x, int y) {
   if (got_picked) {
     std::cout << "KEEP" << std::endl;
-    float normalized_x = (2.0f * x) / engine->width - 1.0f;
-    float normalized_y = 1.0f - (2.0f * y) / engine->height;
+    float normalized_x = (2.0f * x) / engine->get_width() - 1.0f;
+    float normalized_y = 1.0f - (2.0f * y) / engine->get_height();
 
     glm::vec4 nv = glm::vec4(normalized_x, normalized_y, -1.0f, 1.0f);
     glm::mat4 projection;
@@ -218,8 +227,8 @@ void mouse(int button, int state, int x, int y) {
       camera.view.reset();
     }
 
-    float normalized_x = (2.0f * x) / engine->width - 1.0f;
-    float normalized_y = 1.0f - (2.0f * y) / engine->height;
+    float normalized_x = (2.0f * x) / engine->get_width() - 1.0f;
+    float normalized_y = 1.0f - (2.0f * y) / engine->get_height();
 
     glm::vec4 nv = glm::vec4(normalized_x, normalized_y, -1.0f, 1.0f);
     glm::mat4 projection;
@@ -464,7 +473,7 @@ int main(int argc, char **argv) {
       )
     }
   };
-  current_projection = 1;
+  current_projection = 0;
   current_view = 1;
 
   //square = engine->load_scene(*program, "share/square.obj");

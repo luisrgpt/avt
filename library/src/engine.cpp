@@ -14,6 +14,7 @@ engine::engine(
   unsigned height)
   : window_ids(boost::container::vector<bool>())
   , program_ids(boost::container::vector<bool>())
+  , program_filenames(std::vector<std::map<shader_type, std::string>>())
   , shader_ids(std::vector<std::map<shader_type, unsigned>>())
   , mesh_ids(boost::container::vector<bool>())
   , vbo_ids(std::vector<std::vector<unsigned>>())
@@ -22,6 +23,7 @@ engine::engine(
   , height(height) {
   this->window_ids.push_back(false);
   this->program_ids.push_back(false);
+  this->program_filenames.push_back(std::map<shader_type, std::string>());
   this->shader_ids.push_back(std::map<shader_type, unsigned>());
   this->mesh_ids.push_back(false);
   this->vbo_ids.push_back(std::vector<unsigned>());
@@ -98,6 +100,16 @@ bool engine::right_button_is_up(int button, int state) {
   return button == GLUT_RIGHT_BUTTON && state == GLUT_UP;
 }
 
+int gl::engine::get_width()
+{
+  return glutGet(GLUT_WINDOW_WIDTH);
+}
+
+int gl::engine::get_height()
+{
+  return glutGet(GLUT_WINDOW_HEIGHT);
+}
+
 void engine::reshape(float width, float height) {
   glViewport(0, 0, width, height);
 }
@@ -147,6 +159,7 @@ constexpr GLenum to_glenum(shader_type type) {
 }
 
 void engine::start() {
+  //glutFullScreen();
   glutMainLoop();
 }
 void engine::display() {
@@ -157,6 +170,7 @@ program* engine::create_program() {
   unsigned id = glCreateProgram();
   assert(glGetError() == GL_NO_ERROR);
 
+  this->program_filenames.insert(this->program_filenames.begin() + id, std::map<shader_type, std::string>());
   this->shader_ids.insert(this->shader_ids.begin() + id, std::map<shader_type, unsigned>());
   return new program{ id };
 }
@@ -193,6 +207,7 @@ void engine::load_shader(program program, std::string filename) {
   glAttachShader(program.id, shader_id);
   assert(glGetError() == GL_NO_ERROR);
 
+  this->program_filenames[program.id].insert_or_assign(type, filename);
   this->shader_ids[program.id].insert_or_assign(type, shader_id);
 }
 template void engine::load_shader<compute>(program program, std::string);
@@ -367,6 +382,10 @@ scene* engine::load_scene(program program, fs::obj obj, fs::mtl mtl) {
               false,
               vertex_type,
               fragment_type,
+              this->program_filenames[program.id].at(gl::vertex),
+              this->program_filenames[program.id].at(gl::fragment),
+              obj.filename,
+              mtl.filename,
 
               id,
               obj.f[n].size(),
@@ -395,6 +414,10 @@ scene* engine::load_scene(program program, fs::obj obj, fs::mtl mtl) {
           false,
           vertex_type,
           fragment_type,
+          this->program_filenames[program.id].at(gl::vertex),
+          this->program_filenames[program.id].at(gl::fragment),
+          obj.filename,
+          mtl.filename,
 
           id,
           obj.f[n].size(),
@@ -431,94 +454,9 @@ void engine::bind(mesh scene) {
 }
 
 void engine::set_uniform(uniform uniform, math::matrix_4d buffer) {
-  //std::cout << "wrong final: " << std::endl;
-  //std::cout << buffer[0][0] << " " << buffer[0][1] << " " << buffer[0][2] << " " << buffer[0][3] << " " << std::endl;
-  //std::cout << buffer[1][0] << " " << buffer[1][1] << " " << buffer[1][2] << " " << buffer[1][3] << " " << std::endl;
-  //std::cout << buffer[2][0] << " " << buffer[2][1] << " " << buffer[2][2] << " " << buffer[2][3] << " " << std::endl;
-  //std::cout << buffer[3][0] << " " << buffer[3][1] << " " << buffer[3][2] << " " << buffer[3][3] << " " << std::endl;
-  //std::cout << std::endl;
   glUniformMatrix4fv(uniform.id, 1, GL_FALSE, buffer.values.data());
 }
-//program& program::operator+=(uniform<int, 1, 1> buffer) {
-//  glUniform1iv(buffer.id, 1, &buffer.data);
-//  return (*this);
-//}
-//program& program::operator+=(uniform<int, 1, 2> buffer) {
-//  glUniform2iv(buffer.id, 2, buffer.data.data());
-//  return (*this);
-//}
-//program& program::operator+=(uniform<int, 1, 3> buffer) {
-//  glUniform3iv(buffer.id, 3, buffer.data.data());
-//  return (*this);
-//}
-//program& program::operator+=(uniform<int, 1, 4> buffer) {
-//  glUniform4iv(buffer.id, 4, buffer.data.data());
-//  return (*this);
-//}
-//program& program::operator+=(uniform<unsigned, 1, 1> buffer) {
-//  glUniform1uiv(buffer.id, 1, &buffer.data);
-//  return (*this);
-//}
-//program& program::operator+=(uniform<unsigned, 1, 2> buffer) {
-//  glUniform2uiv(buffer.id, 2, buffer.data.data());
-//  return (*this);
-//}
-//program& program::operator+=(uniform<unsigned, 1, 3> buffer) {
-//  glUniform3uiv(buffer.id, 3, buffer.data.data());
-//  return (*this);
-//}
-//program& program::operator+=(uniform<unsigned, 1, 4> buffer) {
-//  glUniform4uiv(buffer.id, 4, buffer.data.data());
-//  return (*this);
-//}
-//program& program::operator+=(uniform<float, 1, 1> buffer) {
-//  glUniform1fv(buffer.id, 1, &buffer.data);
-//  return (*this);
-//}
-//program& program::operator+=(uniform<float, 1, 2> buffer) {
-//  glUniform2fv(buffer.id, 2, buffer.data.data());
-//  return (*this);
-//}
-//program& program::operator+=(uniform<float, 1, 3> buffer) {
-//  glUniform3fv(buffer.id, 3, buffer.data.data());
-//  return (*this);
-//}
-//program& program::operator+=(uniform<float, 1, 4> buffer) {
-//  glUniform4fv(buffer.id, 4, buffer.data.data());
-//  return (*this);
-//}
-//program& program::operator+=(uniform<float, 2, 2> buffer) {
-//  glUniformMatrix2fv(buffer.id, 4, GL_FALSE, buffer.data.data());
-//  return (*this);
-//}
-//program& program::operator+=(uniform<float, 2, 3> buffer) {
-//  glUniformMatrix2x3fv(buffer.id, 6, GL_FALSE, buffer.data.data());
-//  return (*this);
-//}
-//program& program::operator+=(uniform<float, 2, 4> buffer) {
-//  glUniformMatrix2x4fv(buffer.id, 8, GL_FALSE, buffer.data.data());
-//  return (*this);
-//}
-//program& program::operator+=(uniform<float, 3, 2> buffer) {
-//  glUniformMatrix3x2fv(buffer.id, 6, GL_FALSE, buffer.data.data());
-//  return (*this);
-//}
-//program& program::operator+=(uniform<float, 3, 3> buffer) {
-//  glUniformMatrix3fv(buffer.id, 9, GL_FALSE, buffer.data.data());
-//  return (*this);
-//}
-//program& program::operator+=(uniform<float, 3, 4> buffer) {
-//  glUniformMatrix3x4fv(buffer.id, 12, GL_FALSE, buffer.data.data());
-//  return (*this);
-//}
-//program& program::operator+=(uniform<float, 4, 2> buffer) {
-//  glUniformMatrix4x2fv(buffer.id, 8, GL_FALSE, buffer.data.data());
-//  return (*this);
-//}
-//program& program::operator+=(uniform<float, 4, 3> buffer) {
-//  glUniformMatrix4x3fv(buffer.id, 12, GL_FALSE, buffer.data.data());
-//  return (*this);
-//}
+
 void engine::draw(mesh scene) {
   assert(this->current_mesh_id == scene.id);
 

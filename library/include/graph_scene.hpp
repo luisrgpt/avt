@@ -16,6 +16,11 @@ namespace gl {
     vertex_type vertex_type;
     fragment_type fragment_type;
 
+    std::string vertex_file;
+    std::string fragment_file;
+    std::string object_file;
+    std::string material_file;
+
     unsigned id;
     size_t n_faces;
     unsigned program_id;
@@ -68,6 +73,12 @@ namespace gl {
   };
 
   template class graph<model>;
+
+  class bltz {
+  public:
+    static graph<model>* load(std::string);
+    static void save(graph<model>, std::string);
+  };
 };
 
 

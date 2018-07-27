@@ -35,6 +35,7 @@ namespace gl {
   private:
     boost::container::vector<bool> window_ids;
     boost::container::vector<bool> program_ids;
+    std::vector<std::map<shader_type, std::string>> program_filenames;
     std::vector<std::map<shader_type, unsigned>> shader_ids;
     boost::container::vector<bool> mesh_ids;
     std::vector<std::vector<unsigned>> vbo_ids;
@@ -51,9 +52,9 @@ namespace gl {
       math::matrix_4d,  //rotation
       math::matrix_4d   //scalation
     );
+    float width, height;
 
   public:
-    float width, height;
 
     engine(int*, char**, std::string, unsigned, unsigned);
     ~engine();
@@ -64,6 +65,9 @@ namespace gl {
     bool left_button_is_up(int, int);
     bool right_button_is_down(int, int);
     bool right_button_is_up(int, int);
+
+    int get_width();
+    int get_height();
 
     void set_close_callback(void(*)(void));
     void set_display_callback(void(*)(void));

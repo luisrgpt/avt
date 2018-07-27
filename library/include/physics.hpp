@@ -3,6 +3,8 @@
 #ifndef PHYSICS
 #define PHYSICS
 
+#define NDEBUG
+
 /////////////////////////////////////////////////////////////////////// DEPENDENCIES
 #include <boost/container/vector.hpp>
 #include <cassert>
