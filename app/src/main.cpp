@@ -20,6 +20,7 @@ gl::program *program;
 gl::graph<gl::model> *scene_graph;
 std::vector<gl::camera> cameras;
 std::vector<gl::free_camera> free_cameras;
+fs::mtl *random_materials;
 gl::node *node_field;
 gl::node *node_light;
 unsigned current_projection;
@@ -32,15 +33,23 @@ void close() {
 }
 void idle() {}
 void keyboard(unsigned char key, int x, int y) {
+  int r1 = std::rand() % (scene_graph->nodes.size() - 1) + 1;
+  int r2 = std::rand() % random_materials->Ka.size();
+
   switch (key) {
   case 'x':
     delete engine;
     break;
   case 'b':
-    gl::bltz::save(*scene_graph, "test.krg");
+    gl::bltz::save(*scene_graph, "test.bltz");
+    break;
+  case 'r':
+    scene_graph->nodes[r1].value().scene_info.at(0).ambient = random_materials->Ka[r2];
+    scene_graph->nodes[r1].value().scene_info.at(0).diffuse = random_materials->Kd[r2];
+    scene_graph->nodes[r1].value().scene_info.at(0).emissive = random_materials->Ke[r2];
     break;
   case 'n':
-    scene_graph = gl::bltz::load("test.krg");
+    scene_graph = gl::bltz::load("test.bltz");
     break;
   case 'g':
     if (current_view == 0) {
@@ -323,6 +332,8 @@ int main(int argc, char **argv) {
   engine->load_shader<gl::vertex>(*program, "share/texture.vert");
   engine->load_shader<gl::fragment>(*program, "share/texture.frag");
   engine->link(*program);
+
+  random_materials = new fs::mtl("share/random_materials.mtl");
 
   fs::mtl materials("share/materials.mtl");
   fs::obj obj_field("share/field.obj");
