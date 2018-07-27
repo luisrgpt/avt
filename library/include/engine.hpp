@@ -60,7 +60,10 @@ namespace gl {
 
     static scene light;
 
-    bool get_left_mouse_state(int, int);
+    bool left_button_is_down(int, int);
+    bool left_button_is_up(int, int);
+    bool right_button_is_down(int, int);
+    bool right_button_is_up(int, int);
 
     void set_close_callback(void(*)(void));
     void set_display_callback(void(*)(void));

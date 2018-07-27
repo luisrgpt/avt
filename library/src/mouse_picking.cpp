@@ -3,7 +3,7 @@
 using namespace gl;
 
 std::optional<node>* gl::search_in(graph<model> graph, float x, float y) {
-  std::optional<node> *top_node;
+  std::optional<node> *top_node = new std::optional<node>();
   auto tz = 0.0f;
 
   for (auto idx = 0u; idx < graph.nodes.size(); idx++) {

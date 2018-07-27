@@ -167,12 +167,33 @@ void keyboard(unsigned char key, int x, int y) {
     break;
   }
 }
-bool left_mouse_state;
-int x_state = 0;
-int y_state = 0;
+
 gl::node *picked_node;
+bool got_picked = false;
 void motion(int x, int y) {
-  if (left_mouse_state) {
+  if (got_picked) {
+    std::cout << "KEEP" << std::endl;
+    float normalized_x = (2.0f * x) / engine->width - 1.0f;
+    float normalized_y = 1.0f - (2.0f * y) / engine->height;
+
+    glm::vec4 nv = glm::vec4(normalized_x, normalized_y, -1.0f, 1.0f);
+    glm::mat4 projection;
+    glm::mat4 view;
+    if (current_view == 0) {
+      projection = glm::make_mat4(cameras[current_projection].projection.matrix.values.data());
+      view = glm::make_mat4(cameras[current_projection].view.matrix.values.data());
+    }
+    else {
+      projection = glm::make_mat4(free_cameras[current_projection].projection.matrix.values.data());
+      view = glm::make_mat4(free_cameras[current_projection].view.matrix.values.data());
+    }
+
+    nv = glm::inverse(view) * glm::inverse(projection) * nv;
+    auto nx = nv.x - 13.5;
+    auto ny = nv.y - 14.5;
+
+    scene_graph->nodes[picked_node->id].value().object.position = math::vector_3d(nx, ny, 1.0f);
+
     //for (auto &camera : cameras) {
     //camera.view.execute(gl::rotation(math::quaternion((x - x_state) * 10 / (float)fps, camera.view.object.orientation * math::vector_3d(0.0f, 1.0f, 0.0f)), 1));
     //}
@@ -185,17 +206,11 @@ void motion(int x, int y) {
     //for (auto &camera : free_cameras) {
     //  camera.view.apply_rotation(math::vector_3d((y - y_state) * 10 / (float)fps, 0.0f, 0.0f));
     //}
-
-    x_state = x;
-    y_state = y;
   }
 }
 void mouse(int button, int state, int x, int y) {
-  left_mouse_state = engine->get_left_mouse_state(button, state);
-  if (left_mouse_state) {
-    x_state = x;
-    y_state = y;
-
+  if (engine->left_button_is_down(button, state)) {
+    std::cout << "DOWN" << std::endl;
     for (auto &camera : cameras) {
       camera.view.reset();
     }
@@ -219,13 +234,20 @@ void mouse(int button, int state, int x, int y) {
     }
 
     nv = glm::inverse(view) * glm::inverse(projection) * nv;
-    std::cout << nv.x << " " << nv.y << std::endl;
+    auto nx = nv.x - 13.5;
+    auto ny = nv.y - 14.5;
+    std::cout << nx << " " << ny << std::endl;
 
-    auto maybe_node = gl::search_in(*scene_graph, nv.x, nv.y);
+    auto maybe_node = gl::search_in(*scene_graph, nx, ny);
 
     if (maybe_node->has_value()) {
       picked_node = new gl::node{ maybe_node->value().id };
+      got_picked = true;
     }
+  }
+  else if (engine->left_button_is_up(button, state)) {
+    std::cout << "UP" << std::endl;
+    got_picked = false;
   }
 }
 void display() {

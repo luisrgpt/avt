@@ -85,18 +85,18 @@ engine::~engine() {
   }
 }
 
-bool engine::get_left_mouse_state(int button, int state) {
-  switch (button) {
-  case GLUT_LEFT_BUTTON:
-    switch (state) {
-    case GLUT_UP:
-      return false;
-    }
-    return true;
-  }
-  return false;
+bool engine::left_button_is_down(int button, int state) {
+  return button == GLUT_LEFT_BUTTON && state == GLUT_DOWN;
 }
-
+bool engine::left_button_is_up(int button, int state) {
+  return button == GLUT_LEFT_BUTTON && state == GLUT_UP;
+}
+bool engine::right_button_is_down(int button, int state) {
+  return button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN;
+}
+bool engine::right_button_is_up(int button, int state) {
+  return button == GLUT_RIGHT_BUTTON && state == GLUT_UP;
+}
 
 void engine::reshape(float width, float height) {
   glViewport(0, 0, width, height);
