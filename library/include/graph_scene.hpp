@@ -53,7 +53,7 @@ namespace gl {
   };
 
   struct node {
-    const unsigned id;
+    unsigned id;
   };
 
   template<class type>

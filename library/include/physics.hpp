@@ -3,7 +3,7 @@
 #ifndef PHYSICS
 #define PHYSICS
 
-#define NDEBUG
+//#define NDEBUG
 
 /////////////////////////////////////////////////////////////////////// DEPENDENCIES
 #include <boost/container/vector.hpp>

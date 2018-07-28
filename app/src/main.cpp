@@ -1,11 +1,13 @@
 ﻿#include <iostream>
 #include <functional>
+#include <cmath>
 
 #include <glm/gtc/type_ptr.hpp>
 
 #include "math/quaternion.hpp"
 #include "math/vector_3d.hpp"
 #include "engine.hpp"
+#include "camera.hpp"
 #include "graph_scene.hpp"
 #include "mouse_picking.hpp"
 
@@ -15,19 +17,127 @@ mhz = 1000 / fps,
 width = 1000,
 height = 800;
 
+enum ship_state {
+  none,
+  left,
+  right
+};
+
 gl::engine *engine;
-gl::program *program;
+gl::program *flat;
+gl::program *blinn_phong;
 gl::graph<gl::model> *scene_graph;
-std::vector<gl::camera> cameras;
-std::vector<gl::free_camera> free_cameras;
+std::array<gl::camera, 3> *cameras;
+gl::graph<gl::model> *hud;
 fs::mtl *random_materials;
 gl::node *node_field;
 gl::node *node_light;
-gl::node *picked_node;
-unsigned current_projection;
-unsigned current_view;
-unsigned current_mode;
-unsigned current_material;
+gl::node *node_ship;
+gl::node *node_ball;
+std::vector<gl::node> ball_obstacles;
+gl::node *left_ship_obstacle;
+gl::node *right_ship_obstacle;
+unsigned current_camera;
+int score = 0;
+int lifes = 3;
+ship_state state = none;
+bool ball_is_attached = true;
+
+gl::scene* number;
+gl::scene *life;
+gl::scene *scene_0;
+gl::scene *scene_1;
+gl::scene *scene_2;
+gl::scene *scene_3;
+gl::scene *scene_4;
+gl::scene *scene_5;
+gl::scene *scene_6;
+gl::scene *scene_7;
+gl::scene *scene_8;
+gl::scene *scene_9;
+gl::scene *scene_game_over;
+gl::scene *scene_retry;
+
+void update_hud() {
+  delete hud;
+
+  hud = new gl::graph<gl::model>();
+  for (auto i = 0; i < lifes - 1; i++) {
+    hud->set_root(
+      gl::model(
+        *life,
+        math::vector_3d(0.03f, 0.03f, 0.03f),
+        math::vector_3d(-0.85f + 0.12f * i, -0.9f, 0.0f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
+        math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+      )
+    );
+  }
+
+  
+  for (auto i = 0; i < (score > 0 ? (int)log10(score) + 1 : 1); i++) {
+    switch (score / (int)std::powf(10, i) % 10) {
+    case 0:
+      number = scene_0;
+      break;
+    case 1:
+      number = scene_1;
+      break;
+    case 2:
+      number = scene_2;
+      break;
+    case 3:
+      number = scene_3;
+      break;
+    case 4:
+      number = scene_4;
+      break;
+    case 5:
+      number = scene_5;
+      break;
+    case 6:
+      number = scene_6;
+      break;
+    case 7:
+      number = scene_7;
+      break;
+    case 8:
+      number = scene_8;
+      break;
+    default:
+      number = scene_9;
+      break;
+    }
+
+    hud->set_root(
+      gl::model(
+        *number,
+        math::vector_3d(0.1f, 0.1f, 0.1f),
+        math::vector_3d(0.91 - 0.05f * i, 0.85f, 0.0f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
+        math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+      )
+    );
+  }
+
+  if (lifes == 0) {
+    hud->set_root(
+      gl::model(
+        *scene_game_over,
+        math::vector_3d(0.3f, 0.3f, 0.3f),
+        math::vector_3d(0.0f, 0.1f, 0.0f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
+        math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+      )
+    );
+
+    hud->set_root(
+      gl::model(
+        *scene_retry,
+        math::vector_3d(0.2f, 0.2f, 0.2f),
+        math::vector_3d(0.0f, -0.1f, 0.0f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
+        math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+      )
+    );
+  }
+}
 
 /////////////////////////////////////////////////////////////////////// CALLBACKS
 
@@ -36,329 +146,190 @@ void close() {
 }
 void idle() {}
 void keyboard(unsigned char key, int x, int y) {
-  int r1 = std::rand() % (scene_graph->nodes.size() - 1) + 1;
-  int r2 = std::rand() % random_materials->Ka.size();
-
   switch (key) {
-  case 'x':
-    delete engine;
-    break;
-  case 'b':
-    gl::bltz::save(*scene_graph, "test.bltz");
-    break;
   case 'r':
-    scene_graph->nodes[r1].value().scene_info.at(0).ambient = random_materials->Ka[r2];
-    scene_graph->nodes[r1].value().scene_info.at(0).diffuse = random_materials->Kd[r2];
-    scene_graph->nodes[r1].value().scene_info.at(0).emissive = random_materials->Ke[r2];
+    scene_graph = gl::bltz::load("start.bltz");
+    score = 0;
+    lifes = 3;
+    ball_is_attached = true;
+    update_hud();
     break;
-  case 'n':
-    scene_graph = gl::bltz::load("test.bltz");
+  case '-':
+    score -= 1;
+    update_hud();
     break;
-  case 'g':
-    if (current_view == 0) {
-      current_view = 1;
-    }
-    else {
-      current_view = 0;
-    }
-    break;
-  case 'p':
-    if (current_projection == 0) {
-      current_projection = 1;
-    }
-    else {
-      current_projection = 0;
-    }
-    break;
-  case 'm':
-    if (current_mode == 0) {
-      current_mode = 1;
-    }
-    else {
-      current_mode = 0;
-    }
+  case '+':
+    score += 1;
+    update_hud();
     break;
 
-  case 'a':
-    if (current_mode == 0) {
-      for (auto &camera : cameras) {
-        camera.view.execute(gl::linear_movement(camera.view.object.orientation * math::vector_3d(-1.0f, 0.0f, 0.0f), 1));
-      }
-      for (auto &camera : free_cameras) {
-        camera.view.apply_velocity(math::vector_3d(-1.0f, 0.0f, 0.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
-      }
-    }
-    else {
-      scene_graph->nodes[picked_node->id].value().object.position += math::vector_3d(-1.0f, 0.0f, 0.0f);
-    }
-    break;
-  case 'd':
-    if (current_mode == 0) {
-      for (auto &camera : cameras) {
-        camera.view.execute(gl::linear_movement(camera.view.object.orientation * math::vector_3d(1.0f, 0.0f, 0.0f), 1));
-      }
-      for (auto &camera : free_cameras) {
-        camera.view.apply_velocity(math::vector_3d(1.0f, 0.0f, 0.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
-      }
-    }
-    else {
-      scene_graph->nodes[picked_node->id].value().object.position += math::vector_3d(1.0f, 0.0f, 0.0f);
-    }
-    break;
-  case 's':
-    if (current_mode == 0) {
-      for (auto &camera : cameras) {
-        camera.view.execute(gl::linear_movement(camera.view.object.orientation * math::vector_3d(0.0f, -1.0f, 0.0f), 1));
-      }
-      for (auto &camera : free_cameras) {
-        camera.view.apply_velocity(math::vector_3d(0.0f, -1.0f, 0.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
-      }
-    }
-    else {
-      scene_graph->nodes[picked_node->id].value().object.position += math::vector_3d(0.0f, -1.0f, 0.0f);
-    }
-    break;
-  case 'w':
-    if (current_mode == 0) {
-      for (auto &camera : cameras) {
-        camera.view.execute(gl::linear_movement(camera.view.object.orientation * math::vector_3d(0.0f, 1.0f, 0.0f), 1));
-      }
-      for (auto &camera : free_cameras) {
-        camera.view.apply_velocity(math::vector_3d(0.0f, 1.0f, 0.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
-      }
-    }
-    else {
-      scene_graph->nodes[picked_node->id].value().object.position += math::vector_3d(0.0f, 1.0f, 0.0f);
-    }
-    break;
-  case 'q':
-    if (current_mode == 0) {
-      for (auto &camera : cameras) {
-        camera.view.execute(gl::linear_movement(camera.view.object.orientation * math::vector_3d(0.0f, 0.0f, -1.0f), 1));
-      }
-      for (auto &camera : free_cameras) {
-        camera.view.apply_velocity(math::vector_3d(0.0f, 0.0f, -1.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
-      }
-    }
-    else {
-      scene_graph->nodes[picked_node->id].value().object.position += math::vector_3d(0.0f, 0.0f, -1.0f);
-    }
-    break;
-  case 'e':
-    if (current_mode == 0) {
-      for (auto &camera : cameras) {
-        camera.view.execute(gl::linear_movement(camera.view.object.orientation * math::vector_3d(0.0f, 0.0f, 1.0f), 1));
-      }
-      for (auto &camera : free_cameras) {
-        camera.view.apply_velocity(math::vector_3d(0.0f, 0.0f, 1.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
-      }
-    }
-    else {
-      scene_graph->nodes[picked_node->id].value().object.position += math::vector_3d(0.0f, 0.0f, 1.0f);
+  case ' ':
+    if (ball_is_attached) {
+      scene_graph->edges[node_ball->id] = *node_field;
+      scene_graph->nodes[node_ball->id].value().object.position.y -= 12.0f;
+      scene_graph->nodes[node_ball->id].value().execute(gl::rotation(math::quaternion((rand() % 179) - 89.5f, scene_graph->nodes[node_ball->id].value().object.orientation * math::vector_3d(0.0f, 0.0f, 1.0f)), 1));
+      ball_is_attached = false;
     }
     break;
 
   case '1':
-    current_material = 0;
+    current_camera = 0;
     break;
   case '2':
-    current_material = 1;
+    current_camera = 1;
     break;
   case '3':
-    current_material = 2;
+    current_camera = 2;
     break;
-  case '4':
-    current_material = 3;
+
+  case 'a':
+    switch (state) {
+      case none:
+        state = left;
+        break;
+      case right:
+        state = none;
+        break;
+    }
     break;
-  case '5':
-    current_material = 4;
-    break;
-  case '6':
-    current_material = 5;
-    break;
-  case '7':
-    current_material = 6;
-    break;
-  case '8':
-    current_material = 7;
+  case 'd':
+    switch (state) {
+    case none:
+      state = right;
+      break;
+    case left:
+      state = none;
+      break;
+    }
     break;
 
   case 'j':
-    if (current_mode == 0) {
-      for (auto &camera : cameras) {
-        camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(0.0f, 1.0f, 0.0f)), 1));
-      }
-      for (auto &camera : free_cameras) {
-        camera.view.apply_rotation(math::vector_3d(0.0f, 1.0f, 0.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
-      }
-    }
-    else {
-      scene_graph->nodes[picked_node->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(0.0f, 1.0f, 0.0f)), 1));
+    for (auto &camera : *cameras) {
+      camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(0.0f, 1.0f, 0.0f)), 1));
     }
     break;
   case 'l':
-    if (current_mode == 0) {
-      for (auto &camera : cameras) {
-        camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(0.0f, -1.0f, 0.0f)), 1));
-      }
-      for (auto &camera : free_cameras) {
-        camera.view.apply_rotation(math::vector_3d(0.0f, -1.0f, 0.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
-      }
-    }
-    else {
-      scene_graph->nodes[picked_node->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(0.0f, -1.0f, 0.0f)), 1));
+    for (auto &camera : *cameras) {
+      camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(0.0f, -1.0f, 0.0f)), 1));
     }
     break;
   case 'k':
-    if (current_mode == 0) {
-      for (auto &camera : cameras) {
-        camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(-1.0f, 0.0f, 0.0f)), 1));
-      }
-      for (auto &camera : free_cameras) {
-        camera.view.apply_rotation(math::vector_3d(-1.0f, 0.0f, 0.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
-      }
-    }
-    else {
-      scene_graph->nodes[picked_node->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(-1.0f, 0.0f, 0.0f)), 1));
+    for (auto &camera : *cameras) {
+      camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(-1.0f, 0.0f, 0.0f)), 1));
     }
     break;
   case 'i':
-    if (current_mode == 0) {
-      for (auto &camera : cameras) {
-        camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(1.0f, 0.0f, 0.0f)), 1));
-      }
-      for (auto &camera : free_cameras) {
-        camera.view.apply_rotation(math::vector_3d(1.0f, 0.0f, 0.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
-      }
-    }
-    else {
-      scene_graph->nodes[picked_node->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(1.0f, 0.0f, 0.0f)), 1));
+    for (auto &camera : *cameras) {
+      camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(1.0f, 0.0f, 0.0f)), 1));
     }
     break;
   case 'u':
-    if (current_mode == 0) {
-      for (auto &camera : cameras) {
-        camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(0.0f, 0.0f, 1.0f)), 1));
-      }
-      for (auto &camera : free_cameras) {
-        camera.view.apply_rotation(math::vector_3d(0.0f, 0.0f, 1.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
-      }
-    }
-    else {
-      scene_graph->nodes[picked_node->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(0.0f, 0.0f, 1.0f)), 1));
+    for (auto &camera : *cameras) {
+      camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(0.0f, 0.0f, 1.0f)), 1));
     }
     break;
   case 'o':
-    if (current_mode == 0) {
-      for (auto &camera : cameras) {
-        camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(0.0f, 0.0f, -1.0f)), 1));
-      }
-      for (auto &camera : free_cameras) {
-        camera.view.apply_rotation(math::vector_3d(0.0f, 0.0f, -1.0f) * math::matrix_3d::Rotation(camera.view.euler_angle.x, camera.view.euler_angle.y, camera.view.euler_angle.z));
-      }
-    }
-    else {
-      scene_graph->nodes[picked_node->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(0.0f, 0.0f, -1.0f)), 1));
+    for (auto &camera : *cameras) {
+      camera.view.execute(gl::rotation(math::quaternion(1, camera.view.object.orientation * math::vector_3d(0.0f, 0.0f, -1.0f)), 1));
     }
     break;
-    }
-}
-
-float state_x;
-float state_y;
-bool got_picked = false;
-void motion(int x, int y) {
-  if (got_picked) {
-    float normalized_x = (2.0f * x) / engine->width - 1.0f;
-    float normalized_y = 1.0f - (2.0f * y) / engine->height;
-
-    glm::vec4 nv = glm::vec4(normalized_x, normalized_y, -1.0f, 1.0f);
-    glm::mat4 projection;
-    glm::mat4 view;
-    if (current_view == 0) {
-      projection = glm::make_mat4(cameras[current_projection].projection.matrix.values.data());
-      view = glm::make_mat4(cameras[current_projection].view.matrix.values.data());
-    }
-    else {
-      projection = glm::make_mat4(free_cameras[current_projection].projection.matrix.values.data());
-      view = glm::make_mat4(free_cameras[current_projection].view.matrix.values.data());
-    }
-
-    nv = glm::inverse(view) * glm::inverse(projection) * nv;
-    auto nx = nv.x - state_x;
-    auto ny = nv.y - state_y;
-    state_x = nv.x;
-    state_y = nv.y;
-
-    scene_graph->nodes[picked_node->id].value().object.execute(gl::linear_movement(math::vector_3d(nx, ny, 0.0f), 1));
   }
 }
+
+void keyboard_up(unsigned char key, int x, int y) {
+  switch (key) {
+  case 'y':
+    if (lifes == 0) {
+      scene_graph = gl::bltz::load("start.bltz");
+      score = 0;
+      lifes = 3;
+      ball_is_attached = true;
+      update_hud();
+    }
+    break;
+  case 'n':
+    if (lifes == 0) {
+      engine->end();
+    }
+    break;
+
+  case 'a':
+    switch (state) {
+    case none:
+      state = right;
+      break;
+    case left:
+      state = none;
+      break;
+    }
+    break;
+  case 'd':
+    switch (state) {
+    case none:
+      state = left;
+      break;
+    case right:
+      state = none;
+      break;
+    }
+  }
+}
+
 void mouse(int button, int state, int x, int y) {
   bool left_is_down = engine->left_button_is_down(button, state);
-  bool right_is_down = engine->right_button_is_down(button, state);
 
-  if (left_is_down || right_is_down) {
-    for (auto &camera : cameras) {
-      camera.view.reset();
-    }
-    for (auto &camera : free_cameras) {
-      camera.view.reset();
-    }
-
-    float normalized_x = (2.0f * x) / engine->width - 1.0f;
-    float normalized_y = 1.0f - (2.0f * y) / engine->height;
-
-    glm::vec4 nv = glm::vec4(normalized_x, normalized_y, -1.0f, 1.0f);
-    glm::mat4 projection;
-    glm::mat4 view;
-    if (current_view == 0) {
-      projection = glm::make_mat4(cameras[current_projection].projection.matrix.values.data());
-      view = glm::make_mat4(cameras[current_projection].view.matrix.values.data());
-    }
-    else {
-      projection = glm::make_mat4(free_cameras[current_projection].projection.matrix.values.data());
-      view = glm::make_mat4(free_cameras[current_projection].view.matrix.values.data());
-    }
-
-    nv = glm::inverse(view) * glm::inverse(projection) * nv;
-    auto nx = nv.x;
-    auto ny = nv.y;
-
-    auto maybe_node = gl::search_in(*scene_graph, nx, ny);
-
-    if (maybe_node->has_value()) {
-      unsigned id = maybe_node->value().id;
-      if (left_is_down) {
-        picked_node = new gl::node{ id };
-        got_picked = true;
-        state_x = nx;
-        state_y = ny;
-      } else {
-        scene_graph->nodes[id].value().scene_info.at(0).ambient = random_materials->Ka[current_material];
-        scene_graph->nodes[id].value().scene_info.at(0).diffuse = random_materials->Kd[current_material];
-        scene_graph->nodes[id].value().scene_info.at(0).emissive = random_materials->Ke[current_material];
-      }
-    }
+  if (left_is_down) {
   }
   else if (engine->left_button_is_up(button, state)) {
-    got_picked = false;
-    state_x = 0;
-    state_y = 0;
   }
 }
 void display() {
-  if (current_view == 0) {
-    engine->draw(
-      *scene_graph,
-      cameras[current_projection]
-    );
+  if (!ball_is_attached) {
+    auto ball = scene_graph->nodes[node_ball->id].value();
+    for (auto obstacle : ball_obstacles) {
+      auto object = scene_graph->nodes[obstacle.id].value();
+      if (ball.object.position.x - ball.scale[0][0] <= object.object.position.x + object.scale[0][0] ||
+          object.object.position.x - object.scale[0][0] <= ball.object.position.x + ball.scale[0][0]) {
+        ball.object.orientation.z = -ball.object.orientation.z;
+        break;
+      }
+    }
+
+    scene_graph->nodes[node_ball->id].value().execute(gl::linear_movement(scene_graph->nodes[node_ball->id].value().object.orientation * math::vector_3d(0.0f, 1.0f, 0.0f), 0.1f));
   }
-  else {
-    engine->draw(
-      *scene_graph,
-      free_cameras[current_projection]
-    );
+
+  auto ship = scene_graph->nodes[node_ship->id].value();
+  auto left = scene_graph->nodes[left_ship_obstacle->id].value();
+  auto right = scene_graph->nodes[right_ship_obstacle->id].value();
+  switch (state) {
+  case ship_state::left:
+    if (left.object.position.x + left.scale[0][0] < ship.object.position.x - ship.scale[0][0]) {
+      scene_graph->nodes[node_ship->id].value().execute(gl::linear_movement(math::vector_3d(-1.0f, 0.0f, 0.0f), 1));
+      cameras->at(1).view.execute(gl::linear_movement(math::vector_3d(-1.0f, 0.0f, 0.0f), 1));
+      cameras->at(2).view.execute(gl::linear_movement(math::vector_3d(-1.0f, 0.0f, 0.0f), 1));
+    }
+    break;
+  case ship_state::right:
+    std::cout << ship.object.position.x << "+" << ship.scale[0][0] << " <= " << right.object.position.x << "-" << right.scale[0][0] << std::endl;
+    if (ship.object.position.x + ship.scale[0][0] < right.object.position.x - right.scale[0][0]) {
+      scene_graph->nodes[node_ship->id].value().execute(gl::linear_movement(math::vector_3d(1.0f, 0.0f, 0.0f), 1));
+      cameras->at(1).view.execute(gl::linear_movement(math::vector_3d(1.0f, 0.0f, 0.0f), 1));
+      cameras->at(2).view.execute(gl::linear_movement(math::vector_3d(1.0f, 0.0f, 0.0f), 1));
+    }
+    break;
   }
+
+  engine->before_draw();
+  engine->draw(
+    *scene_graph,
+    cameras->at(current_camera)
+  );
+  engine->draw(
+    *hud,
+    math::matrix_4d::kIdentity,
+    math::matrix_4d::kIdentity
+  );
+  engine->after_draw();
 }
 int cnt = 0;
 void timer(int value) {
@@ -367,7 +338,7 @@ void timer(int value) {
 }
 void reshape(int width, int height) {
   engine->reshape(width, height);
-  cameras[current_projection].projection.reshape(width, height);
+  cameras->at(current_camera).projection.reshape(width, height);
 }
 
 int main(int argc, char **argv) {
@@ -377,14 +348,19 @@ int main(int argc, char **argv) {
   engine->set_idle_callback(idle);
   engine->set_reshape_callback(reshape);
   engine->set_keyboard_callback(keyboard);
-  engine->set_motion_callback(motion);
+  engine->set_keyboard_up_callback(keyboard_up);
   engine->set_mouse_callback(mouse);
   engine->set_timer_callback(0, timer, 0);
 
-  program = engine->create_program();
-  engine->load_shader<gl::vertex>(*program, "share/texture.vert");
-  engine->load_shader<gl::fragment>(*program, "share/texture.frag");
-  engine->link(*program);
+  blinn_phong = engine->create_program();
+  engine->load_shader<gl::vertex>(*blinn_phong, "share/blinn_phong.vert");
+  engine->load_shader<gl::fragment>(*blinn_phong, "share/blinn_phong.frag");
+  engine->link(*blinn_phong);
+
+  flat = engine->create_program();
+  engine->load_shader<gl::vertex>(*flat, "share/flat.vert");
+  engine->load_shader<gl::fragment>(*flat, "share/flat.frag");
+  engine->link(*flat);
 
   random_materials = new fs::mtl("share/random_materials.mtl");
 
@@ -396,12 +372,40 @@ int main(int argc, char **argv) {
   fs::obj obj_pipe("share/big_pipe.obj");
   fs::obj obj_border("share/border.obj");
 
-  gl::scene *field = engine->load_scene<gl::blinn_phong_vertex, gl::blinn_phong_fragment>(*program, obj_field, materials);
-  gl::scene *ship = engine->load_scene<gl::blinn_phong_vertex, gl::blinn_phong_fragment>(*program, obj_ship, materials);
-  gl::scene *ball = engine->load_scene<gl::blinn_phong_vertex, gl::blinn_phong_fragment>(*program, obj_ball, materials);
-  gl::scene *box = engine->load_scene<gl::blinn_phong_vertex, gl::blinn_phong_fragment>(*program, obj_box, materials);
-  gl::scene *big_pipe = engine->load_scene<gl::blinn_phong_vertex, gl::blinn_phong_fragment>(*program, obj_pipe, materials);
-  gl::scene *border = engine->load_scene<gl::blinn_phong_vertex, gl::blinn_phong_fragment>(*program, obj_border, materials);
+  fs::obj obj_0("share/0.obj");
+  fs::obj obj_1("share/1.obj");
+  fs::obj obj_2("share/2.obj");
+  fs::obj obj_3("share/3.obj");
+  fs::obj obj_4("share/4.obj");
+  fs::obj obj_5("share/5.obj");
+  fs::obj obj_6("share/6.obj");
+  fs::obj obj_7("share/7.obj");
+  fs::obj obj_8("share/8.obj");
+  fs::obj obj_9("share/9.obj");
+  fs::obj obj_retry("share/retry.obj");
+  fs::obj obj_game_over("share/game_over.obj");
+
+  gl::scene *field = engine->load_scene<gl::blinn_phong_vertex, gl::blinn_phong_fragment>(*blinn_phong, obj_field, materials);
+  gl::scene *ship = engine->load_scene<gl::blinn_phong_vertex, gl::blinn_phong_fragment>(*blinn_phong, obj_ship, materials);
+  gl::scene *ball = engine->load_scene<gl::blinn_phong_vertex, gl::blinn_phong_fragment>(*blinn_phong, obj_ball, materials);
+  gl::scene *box = engine->load_scene<gl::blinn_phong_vertex, gl::blinn_phong_fragment>(*blinn_phong, obj_box, materials);
+  gl::scene *big_pipe = engine->load_scene<gl::blinn_phong_vertex, gl::blinn_phong_fragment>(*blinn_phong, obj_pipe, materials);
+  gl::scene *border = engine->load_scene<gl::blinn_phong_vertex, gl::blinn_phong_fragment>(*blinn_phong, obj_border, materials);
+  gl::scene *wall = engine->load_scene<gl::blinn_phong_vertex, gl::blinn_phong_fragment>(*blinn_phong, obj_ball, materials);
+
+  life = engine->load_scene<gl::flat_vertex, gl::flat_fragment>(*flat, obj_ship, materials);
+  scene_0 = engine->load_scene<gl::flat_vertex, gl::flat_fragment>(*flat, obj_0, materials);
+  scene_1 = engine->load_scene<gl::flat_vertex, gl::flat_fragment>(*flat, obj_1, materials);
+  scene_2 = engine->load_scene<gl::flat_vertex, gl::flat_fragment>(*flat, obj_2, materials);
+  scene_3 = engine->load_scene<gl::flat_vertex, gl::flat_fragment>(*flat, obj_3, materials);
+  scene_4 = engine->load_scene<gl::flat_vertex, gl::flat_fragment>(*flat, obj_4, materials);
+  scene_5 = engine->load_scene<gl::flat_vertex, gl::flat_fragment>(*flat, obj_5, materials);
+  scene_6 = engine->load_scene<gl::flat_vertex, gl::flat_fragment>(*flat, obj_6, materials);
+  scene_7 = engine->load_scene<gl::flat_vertex, gl::flat_fragment>(*flat, obj_7, materials);
+  scene_8 = engine->load_scene<gl::flat_vertex, gl::flat_fragment>(*flat, obj_8, materials);
+  scene_9 = engine->load_scene<gl::flat_vertex, gl::flat_fragment>(*flat, obj_9, materials);
+  scene_retry = engine->load_scene<gl::flat_vertex, gl::flat_fragment>(*flat, obj_retry, materials);
+  scene_game_over = engine->load_scene<gl::flat_vertex, gl::flat_fragment>(*flat, obj_game_over, materials);
 
   scene_graph = new gl::graph<gl::model>();
   node_field = scene_graph->set_root(
@@ -421,7 +425,7 @@ int main(int argc, char **argv) {
       math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
     )
   );
-  picked_node = scene_graph->set_child(
+  node_ship = scene_graph->set_child(
     *node_field,
     gl::model(
       *ship,
@@ -430,18 +434,20 @@ int main(int argc, char **argv) {
       math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
     )
   );
-  scene_graph->set_child(
-    *node_field,
+  node_ball = scene_graph->set_child(
+    *node_ship,
     gl::model(
       *ball,
       math::vector_3d(0.6f, 0.6f, 0.6f),
-      math::vector_3d(0.0f, -11.0f, 1.0f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
+      math::vector_3d(0.0f, 0.7f, 0.0f), math::quaternion(0, math::vector_3d(1.0f, 0.0f, 0.0f)),
       math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
     )
   );
+
+  ball_obstacles = std::vector<gl::node>();
   for (auto i = 0u; i < 6u; i++) {
     for (auto j = 0u; j < 13u; j++) {
-      scene_graph->set_child(
+      auto box_obstacle = scene_graph->set_child(
         *node_field,
         gl::model(
           *box,
@@ -450,14 +456,45 @@ int main(int argc, char **argv) {
           math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
         )
       );
+      ball_obstacles.push_back(*box_obstacle);
     }
   }
+  left_ship_obstacle = scene_graph->set_child(
+    *node_field,
+    gl::model(
+      *wall,
+      math::vector_3d(0.8f, 14.5f, 1.0f),
+      math::vector_3d(-13.0f, 0.0f, 1.0f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
+      math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+    )
+  );
+  ball_obstacles.push_back(*left_ship_obstacle);
+  right_ship_obstacle = scene_graph->set_child(
+    *node_field,
+    gl::model(
+      *wall,
+      math::vector_3d(0.8f, 14.5f, 1.0f),
+      math::vector_3d(13.0f, 0.0f, 1.0f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
+      math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+    )
+  );
+  ball_obstacles.push_back(*right_ship_obstacle);
+  auto up_obstacle = scene_graph->set_child(
+    *node_field,
+    gl::model(
+      *wall,
+      math::vector_3d(26.0f, 0.8f, 1.0f),
+      math::vector_3d(-13.0f, 29.0f, 1.0f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
+      math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+    )
+  );
+  ball_obstacles.push_back(*up_obstacle);
   scene_graph->set_child(
     *node_field,
     gl::model(
       *border,
       math::vector_3d(1, 1, 1),
-      math::vector_3d(0.0f, -0.2f, 0.0f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
+      math::vector_3d(0.0f, -0.2f, 2.0f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
       math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
     )
   );
@@ -468,7 +505,7 @@ int main(int argc, char **argv) {
         gl::model(
           *big_pipe,
           math::vector_3d(1, 1, 1),
-          math::vector_3d(-13.0f + 26.0f * j, -12.625f + 5.0f * i, 0.0f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
+          math::vector_3d(-13.0f + 26.0f * j, -12.625f + 5.0f * i, 2.0f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
           math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
         )
       );
@@ -480,24 +517,13 @@ int main(int argc, char **argv) {
       gl::model(
         *big_pipe,
         math::vector_3d(1, 1, 1),
-        math::vector_3d(-6.75f + 13.5f * j, 14.5f, 0.0f), math::quaternion(90, math::vector_3d(0.0f, 0.0f, 1.0f)),
+        math::vector_3d(-6.75f + 13.5f * j, 14.5f, 2.0f), math::quaternion(90, math::vector_3d(0.0f, 0.0f, 1.0f)),
         math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
       )
     );
   }
 
-  cameras = {
-    gl::camera{
-      gl::view(
-        math::vector_3d(-23.5f, 15.0f, 30.0f), math::quaternion(0, math::vector_3d(1.0f, 0.0f, 0.0f)),
-        math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
-      ),
-      gl::perspective_projection(
-        width, height,
-        20,
-        1.0f, 100.0f
-      )
-    },
+  cameras = new std::array<gl::camera, 3>{
     gl::camera{
       gl::view(
         math::vector_3d(-23.5f, 15.0f, 30.0f), math::quaternion(0, math::vector_3d(1.0f, 0.0f, 0.0f)),
@@ -509,37 +535,36 @@ int main(int argc, char **argv) {
         -15.0f, 15.0f,
         1.0f, 100.0f
       )
-    }
+    },
+      gl::camera{
+        gl::view(
+          math::vector_3d(-23.5f, -2.0f, 4.0f), math::quaternion(90, math::vector_3d(1.0f, 0.0f, 0.0f)),
+          math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+        ),
+        gl::perspective_projection(
+          width, height,
+          90,
+          0.1f, 50.0f
+        )
+    },
+      gl::camera{
+        gl::view(
+          math::vector_3d(-23.5f, 2.5f, 1.0f), math::quaternion(90, math::vector_3d(1.0f, 0.0f, 0.0f)),
+          math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+        ),
+        gl::perspective_projection(
+          width, height,
+          90,
+          0.4f, 50.0f
+        )
+      }
   };
 
-  free_cameras = {
-    gl::free_camera{
-      gl::free_view(
-        math::vector_3d(-23.5f, 15.0f, 30.0f),
-        math::vector_3d(0, 0, 0)
-      ),
-      gl::perspective_projection(
-        width, height,
-        20,
-        1.0f, 100.0f
-      )
-    },
-    gl::free_camera{
-      gl::free_view(
-        math::vector_3d(-23.5f, 15.0f, 30.0f),
-        math::vector_3d(0, 0, 0)
-      ),
-      gl::orthogonal_projection(
-        width, height,
-        -13.5f, 13.5f,
-        -15.0f, 15.0f,
-        1.0f, 100.0f
-      )
-    }
-  };
-  current_projection = 1;
-  current_view = 0;
-  current_mode = 0;
+  current_camera = 0;
+
+  update_hud();
+
+  gl::bltz::save(*scene_graph, "start.bltz");
 
   engine->start();
 

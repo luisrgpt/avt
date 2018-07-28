@@ -10,22 +10,22 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <None Include="share\position_fragment.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="share\position_vertex.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
     <None Include="share\normal_fragment.glsl">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="share\normal_vertex.glsl">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="share\flat.vert">
+    <None Include="share\texture.frag">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="share\flat.frag">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="share\blinn_phong.frag">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="share\blinn_phong.vert">
+    <None Include="share\texture.vert">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

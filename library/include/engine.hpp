@@ -33,12 +33,24 @@ namespace gl {
 
   class engine {
   private:
+    enum program_state {
+      created,
+      linked,
+      used,
+      deleted
+    };
+
+    struct program_info {
+      program_state state = created;
+      std::map<shader_type, std::string> shader_filenames = std::map<shader_type, std::string>();
+      std::map<shader_type, unsigned> shader_ids = std::map<shader_type, unsigned>();
+    };
+
     boost::container::vector<bool> window_ids;
-    boost::container::vector<bool> program_ids;
-    std::vector<std::map<shader_type, std::string>> program_filenames;
-    std::vector<std::map<shader_type, unsigned>> shader_ids;
+    std::map<unsigned, program_info> programs;
     boost::container::vector<bool> mesh_ids;
     std::vector<std::vector<unsigned>> vbo_ids;
+
     unsigned current_mesh_id;
     unsigned current_program_id;
     int window_id;
@@ -46,6 +58,15 @@ namespace gl {
     void set_blinn_phong(
       mesh,
       illumination,
+      math::matrix_4d,  //projection
+      math::matrix_4d,  //view
+      math::matrix_4d,  //translation
+      math::matrix_4d,  //rotation
+      math::matrix_4d   //scalation
+    );
+
+    void set_flat(
+      mesh,
       math::matrix_4d,  //projection
       math::matrix_4d,  //view
       math::matrix_4d,  //translation
@@ -74,6 +95,7 @@ namespace gl {
     void set_idle_callback(void(*)(void));
     void set_reshape_callback(void(*)(int, int));
     void set_keyboard_callback(void(*)(unsigned char, int, int));
+    void set_keyboard_up_callback(void(*)(unsigned char, int, int));
     void set_motion_callback(void(*)(int, int));
     void set_mouse_callback(void(*)(int, int, int, int));
     void set_timer_callback(const unsigned, void(*)(int), const int);
@@ -83,6 +105,7 @@ namespace gl {
 
     void start();
     void display();
+    void end();
 
     program* create_program();
     template<shader_type type>
@@ -99,10 +122,12 @@ namespace gl {
 
     void set_uniform(uniform, math::matrix_4d);
 
+    void before_draw();
     void draw(mesh);
     void draw(graph<model>, camera);
     void draw(graph<model>, free_camera);
     void draw(graph<model>, math::matrix_4d, math::matrix_4d);
+    void after_draw();
 
     void unbind();
     void unuse();

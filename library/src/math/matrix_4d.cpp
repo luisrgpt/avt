@@ -415,7 +415,8 @@ const matrix_4d math::matrix_4d::OrthographicProjection(const float& left, const
                   -(right + left) / (right - left), -(top + bottom) / (top - bottom), -(far_ + near_) / (far_ - near_),  1.0f);
 }
 
-const matrix_4d math::matrix_4d::PerspectiveProjection(const float& fovy, const float& aspect, const float& near_, const float& far_) {
+const matrix_4d math::matrix_4d::PerspectiveProjection(const float& degree, const float& aspect, const float& near_, const float& far_) {
+  float fovy = degree * DEGREES_TO_RADIANS;
   return matrix_4d(1 / tanf(fovy / 2) / aspect,  0.0f              ,  0.0f                             , 0.0f,
                    0.0f                       ,  1 / tanf(fovy / 2),  0.0f                             , 0.0f,
                    0.0f                       ,  0.0f              , -(far_ + near_) / (far_ - near_)  , -1.0f,

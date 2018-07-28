@@ -13,18 +13,13 @@ engine::engine(
   unsigned width,
   unsigned height)
   : window_ids(boost::container::vector<bool>())
-  , program_ids(boost::container::vector<bool>())
-  , program_filenames(std::vector<std::map<shader_type, std::string>>())
-  , shader_ids(std::vector<std::map<shader_type, unsigned>>())
+  , programs(std::map<unsigned, program_info>())
   , mesh_ids(boost::container::vector<bool>())
   , vbo_ids(std::vector<std::vector<unsigned>>())
   , current_mesh_id(0)
   , width(width)
   , height(height) {
   this->window_ids.push_back(false);
-  this->program_ids.push_back(false);
-  this->program_filenames.push_back(std::map<shader_type, std::string>());
-  this->shader_ids.push_back(std::map<shader_type, unsigned>());
   this->mesh_ids.push_back(false);
   this->vbo_ids.push_back(std::vector<unsigned>());
 
@@ -61,11 +56,11 @@ engine::engine(
 }
 
 engine::~engine() {
-  for (auto i = 0u; i < program_ids.size(); i++) {
-    if (program_ids[i]) {
-      program_ids[i] = false;
-      glDeleteProgram(i);
-      for (auto shader : this->shader_ids[i]) {
+  for (auto x : this->programs) {
+    if (x.second.state != deleted) {
+      x.second.state = deleted;
+      glDeleteProgram(x.first);
+      for (auto shader : x.second.shader_ids) {
         glDeleteShader(shader.second);
       }
     }
@@ -129,6 +124,9 @@ void engine::set_reshape_callback(void(*handler)(int, int)) {
 void engine::set_keyboard_callback(void(*handler)(unsigned char, int, int)) {
   glutKeyboardFunc(handler);
 }
+void engine::set_keyboard_up_callback(void(*handler)(unsigned char, int, int)) {
+  glutKeyboardUpFunc(handler);
+}
 void engine::set_motion_callback(void(*handler)(int, int)) {
   glutMotionFunc(handler);
 }
@@ -159,24 +157,25 @@ constexpr GLenum to_glenum(shader_type type) {
 }
 
 void engine::start() {
-  //glutFullScreen();
   glutMainLoop();
 }
 void engine::display() {
   glutPostRedisplay();
+}
+void engine::end() {
+  glutLeaveMainLoop();
 }
 
 program* engine::create_program() {
   unsigned id = glCreateProgram();
   assert(glGetError() == GL_NO_ERROR);
 
-  this->program_filenames.insert(this->program_filenames.begin() + id, std::map<shader_type, std::string>());
-  this->shader_ids.insert(this->shader_ids.begin() + id, std::map<shader_type, unsigned>());
+  this->programs.insert_or_assign(id, program_info());
   return new program{ id };
 }
 template<shader_type type>
 void engine::load_shader(program program, std::string filename) {
-  assert(this->shader_ids.size() > program.id && this->shader_ids[program.id].find(type) == this->shader_ids[program.id].end());
+  assert(this->programs[program.id].state == created);
 
   std::ifstream shader_ifstream(filename);
   std::string shader_string{
@@ -207,8 +206,8 @@ void engine::load_shader(program program, std::string filename) {
   glAttachShader(program.id, shader_id);
   assert(glGetError() == GL_NO_ERROR);
 
-  this->program_filenames[program.id].insert_or_assign(type, filename);
-  this->shader_ids[program.id].insert_or_assign(type, shader_id);
+  this->programs[program.id].shader_filenames.insert_or_assign(type, filename);
+  this->programs[program.id].shader_ids.insert_or_assign(type, shader_id);
 }
 template void engine::load_shader<compute>(program program, std::string);
 template void engine::load_shader<vertex>(program program, std::string);
@@ -217,7 +216,7 @@ template void engine::load_shader<tess_control>(program program, std::string);
 template void engine::load_shader<tess_evaluation>(program program, std::string);
 template void engine::load_shader<fragment>(program program, std::string);
 uniform* engine::get_uniform(program program, std::string name) {
-  assert(this->shader_ids.size() > program.id && this->shader_ids[program.id].size() > 0);
+  assert(this->programs[program.id].state == created);
 
   int id = glGetUniformLocation(program.id, name.c_str());
   assert(glGetError() == GL_NO_ERROR);
@@ -225,7 +224,7 @@ uniform* engine::get_uniform(program program, std::string name) {
   return new uniform{ id };
 }
 uniform_block* engine::get_uniform_block(program program, std::string name) {
-  assert(this->shader_ids.size() > program.id && this->shader_ids[program.id].size() > 0);
+  assert(this->programs[program.id].state == created);
 
   unsigned id = glGetUniformBlockIndex(program.id, name.c_str());
   assert(glGetError() == GL_NO_ERROR);
@@ -233,7 +232,7 @@ uniform_block* engine::get_uniform_block(program program, std::string name) {
   return new uniform_block{ id };
 }
 void engine::link(program program) {
-  assert(this->shader_ids.size() > program.id && this->shader_ids[program.id].size() > 0);
+  assert(this->programs[program.id].state == created);
 
   glLinkProgram(program.id);
   assert(glGetError() == GL_NO_ERROR);
@@ -241,7 +240,7 @@ void engine::link(program program) {
   glValidateProgram(program.id);
   assert(glGetError() == GL_NO_ERROR);
 
-  for (auto shader : this->shader_ids[program.id]) {
+  for (auto shader : programs[program.id].shader_ids) {
     glDetachShader(program.id, shader.second);
   }
   assert(glGetError() == GL_NO_ERROR);
@@ -250,12 +249,12 @@ void engine::link(program program) {
   glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &test);
   std::cout << "GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT  " << test << std::endl;
 
-  this->program_ids.insert(this->program_ids.begin() + program.id, true);
+  this->programs[program.id].state = linked;
 }
 
 template<class vertex, class fragment>
 scene* engine::load_scene(program program, fs::obj obj, fs::mtl mtl) {
-  assert(this->program_ids.size() > program.id && this->program_ids[program.id]);
+  assert(this->programs[program.id].state == linked);
 
   unsigned id;
   auto scene = new std::vector<mesh>();
@@ -357,11 +356,12 @@ scene* engine::load_scene(program program, fs::obj obj, fs::mtl mtl) {
 
     constexpr vertex_type vertex_type
       = std::is_same<vertex, none>::value ? v_none
-      : std::is_same<vertex, mvp>::value ? v_mvp
+      : std::is_same<vertex, flat_vertex>::value ? v_flat
       : v_blinn_phong_vertex;
 
     constexpr fragment_type fragment_type
-      = std::is_same<vertex, none>::value ? f_none
+      = std::is_same<fragment, none>::value ? f_none
+      : std::is_same<fragment, flat_fragment>::value ? f_flat
       : f_blinn_phong_fragment;
 
     this->mesh_ids.insert(this->mesh_ids.begin() + id, true);
@@ -374,8 +374,8 @@ scene* engine::load_scene(program program, fs::obj obj, fs::mtl mtl) {
               false,
               vertex_type,
               fragment_type,
-              this->program_filenames[program.id].at(gl::vertex),
-              this->program_filenames[program.id].at(gl::fragment),
+              this->programs[program.id].shader_filenames[gl::vertex],
+              this->programs[program.id].shader_filenames[gl::fragment],
               obj.filename,
               mtl.filename,
 
@@ -406,8 +406,8 @@ scene* engine::load_scene(program program, fs::obj obj, fs::mtl mtl) {
           false,
           vertex_type,
           fragment_type,
-          this->program_filenames[program.id].at(gl::vertex),
-          this->program_filenames[program.id].at(gl::fragment),
+          this->programs[program.id].shader_filenames[gl::vertex],
+          this->programs[program.id].shader_filenames[gl::fragment],
           obj.filename,
           mtl.filename,
 
@@ -425,8 +425,9 @@ scene* engine::load_scene(program program, fs::obj obj, fs::mtl mtl) {
   return scene;
 }
 template scene* engine::load_scene<blinn_phong_vertex, blinn_phong_fragment>(program program, fs::obj obj, fs::mtl mtl);
+template scene* engine::load_scene<flat_vertex, flat_fragment>(program program, fs::obj obj, fs::mtl mtl);
 void engine::use(program program) {
-  assert(this->program_ids.size() > program.id && this->program_ids[program.id]);
+  assert(this->programs[program.id].state == linked);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glUseProgram(program.id);
@@ -449,6 +450,9 @@ void engine::set_uniform(uniform uniform, math::matrix_4d buffer) {
   glUniformMatrix4fv(uniform.id, 1, GL_FALSE, buffer.values.data());
 }
 
+void engine::before_draw() {
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
 void engine::draw(mesh scene) {
   assert(this->current_mesh_id == scene.id);
 
@@ -502,7 +506,6 @@ void engine::draw(
   }
 
   // Draw meshes
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   for (auto i = 1u; i < scene_graph.nodes.size(); i++) {
     for (auto mesh : scene_graph.nodes[i].value().scene_info) {
       if (mesh.is_light) {
@@ -510,10 +513,7 @@ void engine::draw(
       }
 
       if (this->current_program_id != mesh.program_id) {
-        assert(
-          this->program_ids.size() > mesh.program_id &&
-          this->program_ids[mesh.program_id]
-        );
+        assert(this->programs[mesh.program_id].state == linked);
 
         this->current_program_id = mesh.program_id;
         glUseProgram(current_program_id);
@@ -543,8 +543,15 @@ void engine::draw(
       case v_none:
         
         break;
-      case v_mvp:
-
+      case v_flat:
+        this->set_flat(
+          mesh,
+          projection,
+          view,
+          translations[i],
+          rotations[i],
+          scalations[i]
+        );
         break;
       case v_blinn_phong_vertex:
         this->set_blinn_phong(
@@ -562,7 +569,36 @@ void engine::draw(
       assert(glGetError() == GL_NO_ERROR);
     }
   }
+}
+void engine::after_draw() {
   glutSwapBuffers();
+}
+
+void engine::set_flat(
+  mesh mesh,
+  math::matrix_4d projection,
+  math::matrix_4d view,
+  math::matrix_4d translation,
+  math::matrix_4d rotation,
+  math::matrix_4d scalation
+) {
+  math::matrix_4d model = translation * rotation * scalation;
+
+  glBindBufferRange(GL_UNIFORM_BUFFER, 0, mesh.vertex, 0, sizeof(float) * 60);
+  glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(float) * 16, model.values.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 16, sizeof(float) * 16, view.values.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 32, sizeof(float) * 16, projection.values.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 48, sizeof(float) * 9, (view * model).Normal().values.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 57, sizeof(float) * 3, std::vector<float>{0.0f,0.0f,0.0f}.data());
+  glBindBufferRange(GL_UNIFORM_BUFFER, 1, mesh.fragment, sizeof(float) * 60, sizeof(float) * 13 + sizeof(int));
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 60, sizeof(float) * 3, mesh.ambient.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 63, sizeof(float) * 3, mesh.diffuse.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 66, sizeof(float) * 3, mesh.specular.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 69, sizeof(float) * 3, mesh.emissive.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 72, sizeof(float), &mesh.shininess);
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 73, sizeof(int), &mesh.n_textures);
+  glBindBuffer(GL_UNIFORM_BUFFER, GL_ZERO);
+  assert(glGetError() == GL_NO_ERROR);
 }
 
 void engine::set_blinn_phong(
