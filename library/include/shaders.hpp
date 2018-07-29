@@ -5,6 +5,7 @@
 
 /////////////////////////////////////////////////////////////////////// DEPENDENCIES
 #include <array>
+#include <GL/glew.h>
 
 /////////////////////////////////////////////////////////////////////// NAMESPACE
 namespace gl {
@@ -22,34 +23,34 @@ namespace gl {
 
   struct none {};
   struct flat_vertex {
-    std::array<float, 16> model;
-    std::array<float, 16> view;
-    std::array<float, 16> projection;
-    std::array<float, 9> m_normal;
-    std::array<float, 3> light_position;
+    std::array<GLfloat, 16> model;
+    std::array<GLfloat, 16> view;
+    std::array<GLfloat, 16> projection;
+    std::array<GLfloat, 9> m_normal;
+    std::array<GLfloat, 3> light_position;
   };
   struct flat_fragment {
-    std::array<float, 3> Ka;
-    std::array<float, 3> Kd;
-    std::array<float, 3> Ks;
-    std::array<float, 3> Ke;
+    std::array<GLfloat, 3> Ka;
+    std::array<GLfloat, 3> Kd;
+    std::array<GLfloat, 3> Ks;
+    std::array<GLfloat, 3> Ke;
     float shininess;
     int tex_count;
   };
   struct blinn_phong_vertex {
-    std::array<float, 16> model;
-    std::array<float, 16> view;
-    std::array<float, 16> projection;
-    std::array<float, 9> m_normal;
-    std::array<float, 3> light_position;
+    std::array<GLfloat, 16> model;
+    std::array<GLfloat, 16> view;
+    std::array<GLfloat, 16> projection;
+    std::array<GLfloat, 9> m_normal;
+    std::array<GLfloat, 3> light_position;
   };
   struct blinn_phong_fragment {
-    std::array<float, 3> Ka;
-    std::array<float, 3> Kd;
-    std::array<float, 3> Ks;
-    std::array<float, 3> Ke;
-    float shininess;
-    int tex_count;
+    std::array<GLfloat, 3> Ka;
+    std::array<GLfloat, 3> Kd;
+    std::array<GLfloat, 3> Ks;
+    std::array<GLfloat, 3> Ke;
+    GLfloat shininess;
+    GLint tex_count;
   };
 };
 

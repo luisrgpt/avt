@@ -187,26 +187,53 @@ void keyboard(unsigned char key, int x, int y) {
     current_camera = 2;
     break;
 
+  //case 'a':
+  //  switch (state) {
+  //    case none:
+  //      state = left;
+  //      break;
+  //    case right:
+  //      state = none;
+  //      break;
+  //  }
+  //  break;
+  //case 'd':
+  //  switch (state) {
+  //  case none:
+  //    state = right;
+  //    break;
+  //  case left:
+  //    state = none;
+  //    break;
+  //  }
+  //  break;
+
+
+
+
+
   case 'a':
-    switch (state) {
-      case none:
-        state = left;
-        break;
-      case right:
-        state = none;
-        break;
-    }
+      scene_graph->nodes[node_light->id].value().object.position += math::vector_3d(-1.0f, 0.0f, 0.0f);
     break;
   case 'd':
-    switch (state) {
-    case none:
-      state = right;
-      break;
-    case left:
-      state = none;
-      break;
-    }
+      scene_graph->nodes[node_light->id].value().object.position += math::vector_3d(1.0f, 0.0f, 0.0f);
     break;
+  case 's':
+      scene_graph->nodes[node_light->id].value().object.position += math::vector_3d(0.0f, -1.0f, 0.0f);
+    break;
+  case 'w':
+      scene_graph->nodes[node_light->id].value().object.position += math::vector_3d(0.0f, 1.0f, 0.0f);
+    break;
+  case 'q':
+      scene_graph->nodes[node_light->id].value().object.position += math::vector_3d(0.0f, 0.0f, -1.0f);
+    break;
+  case 'e':
+      scene_graph->nodes[node_light->id].value().object.position += math::vector_3d(0.0f, 0.0f, 1.0f);
+    break;
+
+
+
+
 
   case 'j':
     scene_graph->nodes[node_field->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(0.0f, 1.0f, 0.0f)), 1));
@@ -246,25 +273,25 @@ void keyboard_up(unsigned char key, int x, int y) {
     }
     break;
 
-  case 'a':
-    switch (state) {
-    case none:
-      state = right;
-      break;
-    case left:
-      state = none;
-      break;
-    }
-    break;
-  case 'd':
-    switch (state) {
-    case none:
-      state = left;
-      break;
-    case right:
-      state = none;
-      break;
-    }
+  //case 'a':
+  //  switch (state) {
+  //  case none:
+  //    state = right;
+  //    break;
+  //  case left:
+  //    state = none;
+  //    break;
+  //  }
+  //  break;
+  //case 'd':
+  //  switch (state) {
+  //  case none:
+  //    state = left;
+  //    break;
+  //  case right:
+  //    state = none;
+  //    break;
+  //  }
   }
 }
 
@@ -363,8 +390,8 @@ void display() {
             scene_graph->edges[node_ball->id] = *node_ship;
             scene_graph->nodes[node_ball->id].value().object.position = math::vector_3d(0.0f, 0.8f * 0.6f, 0.0f);
             scene_graph->nodes[node_ball->id].value().object.orientation = math::quaternion(0, math::vector_3d(1.0f, 0.0f, 0.0f));
-            cameras->at(1).view.object.position = scene_graph->nodes[node_ship->id].value().object.position + math::vector_3d(-23.5f, 14.5f, 0.0f) + math::vector_3d(0.0f, -4.5f, 3.0f);
-            cameras->at(2).view.object.position = scene_graph->nodes[node_ship->id].value().object.position + math::vector_3d(-23.5f, 14.5f, 0.0f);
+            cameras->at(1).view.object.position = scene_graph->nodes[node_ship->id].value().object.position + math::vector_3d(0.0f, 14.5f, 0.0f) + math::vector_3d(0.0f, -4.5f, 3.0f);
+            cameras->at(2).view.object.position = scene_graph->nodes[node_ship->id].value().object.position + math::vector_3d(0.0f, 14.5f, 0.0f);
             break;
           }
           break;
@@ -427,6 +454,7 @@ int main(int argc, char **argv) {
   fs::obj obj_ship("share/ship.obj");
   fs::obj obj_ball("share/ball.obj");
   fs::obj obj_box("share/box.obj");
+  fs::obj obj_wall("share/wall.obj");
   fs::obj obj_pipe("share/big_pipe.obj");
   fs::obj obj_border("share/border.obj");
 
@@ -449,7 +477,7 @@ int main(int argc, char **argv) {
   gl::scene *box = engine->load_scene<gl::blinn_phong_vertex, gl::blinn_phong_fragment>(*blinn_phong, obj_box, materials);
   gl::scene *big_pipe = engine->load_scene<gl::blinn_phong_vertex, gl::blinn_phong_fragment>(*blinn_phong, obj_pipe, materials);
   gl::scene *border = engine->load_scene<gl::blinn_phong_vertex, gl::blinn_phong_fragment>(*blinn_phong, obj_border, materials);
-  gl::scene *wall = engine->load_scene<gl::blinn_phong_vertex, gl::blinn_phong_fragment>(*blinn_phong, obj_box, materials);
+  gl::scene *wall = engine->load_scene<gl::blinn_phong_vertex, gl::blinn_phong_fragment>(*blinn_phong, obj_wall, materials);
 
   life = engine->load_scene<gl::flat_vertex, gl::flat_fragment>(*flat, obj_ship, materials);
   scene_0 = engine->load_scene<gl::flat_vertex, gl::flat_fragment>(*flat, obj_0, materials);
@@ -470,7 +498,7 @@ int main(int argc, char **argv) {
     gl::model(
       *field,
       math::vector_3d(1, 1, 1),
-      math::vector_3d(-23.5f, 14.5f, 0.0f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
+      math::vector_3d(0.0f, 14.5f, 0.0f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
       math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
     )
   );
@@ -598,7 +626,7 @@ int main(int argc, char **argv) {
   cameras = new std::array<gl::camera, 3>{
     gl::camera{
       gl::view(
-        math::vector_3d(-23.5f, 15.0f, 30.0f), math::quaternion(0, math::vector_3d(1.0f, 0.0f, 0.0f)),
+        math::vector_3d(0.0f, 15.0f, 30.0f), math::quaternion(0, math::vector_3d(1.0f, 0.0f, 0.0f)),
         math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
       ),
       gl::orthogonal_projection(
@@ -610,7 +638,7 @@ int main(int argc, char **argv) {
     },
       gl::camera{
         gl::view(
-          math::vector_3d(-23.5f, -2.0f, 4.0f), math::quaternion(90, math::vector_3d(1.0f, 0.0f, 0.0f)),
+          math::vector_3d(0.0f, -2.0f, 4.0f), math::quaternion(90, math::vector_3d(1.0f, 0.0f, 0.0f)),
           math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
         ),
         gl::perspective_projection(
@@ -621,13 +649,13 @@ int main(int argc, char **argv) {
     },
       gl::camera{
         gl::view(
-          math::vector_3d(-23.5f, 2.5f, 1.0f), math::quaternion(90, math::vector_3d(1.0f, 0.0f, 0.0f)),
+          math::vector_3d(0.0f, 2.5f, 1.0f), math::quaternion(90, math::vector_3d(1.0f, 0.0f, 0.0f)),
           math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
         ),
         gl::perspective_projection(
           width, height,
           90,
-          0.4f, 50.0f
+          0.5f, 50.0f
         )
       }
   };

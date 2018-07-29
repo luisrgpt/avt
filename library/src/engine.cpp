@@ -3,6 +3,7 @@
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 #include <iostream>
+#include <glm/gtc/type_ptr.hpp>
 
 using namespace gl;
 
@@ -268,7 +269,7 @@ scene* engine::load_scene(program program, fs::obj obj, fs::mtl mtl) {
 
     // buffer for vertex positions
     if (obj.f[n][0][0] > 0) {
-      std::vector<float> v;
+      std::vector<GLfloat> v;
       int i;
       unsigned buffer;
       for (auto f : obj.f[n]) {
@@ -280,7 +281,7 @@ scene* engine::load_scene(program program, fs::obj obj, fs::mtl mtl) {
       glGenBuffers(1, &buffer);
       this->vbo_ids[id].push_back(buffer);
       glBindBuffer(GL_ARRAY_BUFFER, buffer);
-      glBufferData(GL_ARRAY_BUFFER, sizeof(float) * v.size(), v.data(), GL_STATIC_DRAW);
+      glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * v.size(), v.data(), GL_STATIC_DRAW);
       glEnableVertexAttribArray(0);
       glVertexAttribPointer(0, 3, GL_FLOAT, 0, 0, 0);
       assert(glGetError() == GL_NO_ERROR);
@@ -288,7 +289,7 @@ scene* engine::load_scene(program program, fs::obj obj, fs::mtl mtl) {
 
     // buffer for vertex normals
     if (obj.f[n][0][2] > 0) {
-      std::vector<float> vn;
+      std::vector<GLfloat> vn;
       int i;
       unsigned buffer;
       for (auto f : obj.f[n]) {
@@ -300,7 +301,7 @@ scene* engine::load_scene(program program, fs::obj obj, fs::mtl mtl) {
       glGenBuffers(1, &buffer);
       this->vbo_ids[id].push_back(buffer);
       glBindBuffer(GL_ARRAY_BUFFER, buffer);
-      glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vn.size(), vn.data(), GL_STATIC_DRAW);
+      glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * vn.size(), vn.data(), GL_STATIC_DRAW);
       glEnableVertexAttribArray(1);
       glVertexAttribPointer(1, 3, GL_FLOAT, 0, 0, 0);
       assert(glGetError() == GL_NO_ERROR);
@@ -308,7 +309,7 @@ scene* engine::load_scene(program program, fs::obj obj, fs::mtl mtl) {
 
     // buffer for vertex texture coordinates
     if (obj.f[n][0][1] > 0) {
-      std::vector<float> vt;
+      std::vector<GLfloat> vt;
       int i;
       unsigned buffer;
       for (auto f : obj.f[n]) {
@@ -319,7 +320,7 @@ scene* engine::load_scene(program program, fs::obj obj, fs::mtl mtl) {
       glGenBuffers(1, &buffer);
       this->vbo_ids[id].push_back(buffer);
       glBindBuffer(GL_ARRAY_BUFFER, buffer);
-      glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vt.size(), vt.data(), GL_STATIC_DRAW);
+      glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * vt.size(), vt.data(), GL_STATIC_DRAW);
       glEnableVertexAttribArray(2);
       glVertexAttribPointer(2, 2, GL_FLOAT, 0, 0, 0);
       assert(glGetError() == GL_NO_ERROR);
@@ -589,19 +590,19 @@ void engine::set_flat(
 ) {
   math::matrix_4d model = translation * rotation * scalation;
 
-  glBindBufferRange(GL_UNIFORM_BUFFER, 0, mesh.vertex, 0, sizeof(float) * 60);
-  glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(float) * 16, model.values.data());
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 16, sizeof(float) * 16, view.values.data());
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 32, sizeof(float) * 16, projection.values.data());
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 48, sizeof(float) * 9, (view * model).Normal().values.data());
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 57, sizeof(float) * 3, std::vector<float>{0.0f,0.0f,0.0f}.data());
-  glBindBufferRange(GL_UNIFORM_BUFFER, 1, mesh.fragment, sizeof(float) * 60, sizeof(float) * 13 + sizeof(int));
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 60, sizeof(float) * 3, mesh.ambient.data());
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 63, sizeof(float) * 3, mesh.diffuse.data());
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 66, sizeof(float) * 3, mesh.specular.data());
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 69, sizeof(float) * 3, mesh.emissive.data());
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 72, sizeof(float), &mesh.shininess);
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 73, sizeof(int), &mesh.n_textures);
+  glBindBufferRange(GL_UNIFORM_BUFFER, 0, mesh.vertex, 0, sizeof(GLfloat) * 60);
+  glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GLfloat) * 16, model.values.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 16, sizeof(GLfloat) * 16, view.values.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 32, sizeof(GLfloat) * 16, projection.values.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 48, sizeof(GLfloat) * 9, (view * model).Normal().values.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 57, sizeof(GLfloat) * 3, std::vector<GLfloat>{0.0f,0.0f,0.0f}.data());
+  glBindBufferRange(GL_UNIFORM_BUFFER, 1, mesh.fragment, sizeof(GLfloat) * 60, sizeof(GLfloat) * 13 + sizeof(GLint));
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 60, sizeof(GLfloat) * 3, mesh.ambient.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 63, sizeof(GLfloat) * 3, mesh.diffuse.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 66, sizeof(GLfloat) * 3, mesh.specular.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 69, sizeof(GLfloat) * 3, mesh.emissive.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 72, sizeof(GLfloat), &mesh.shininess);
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 73, sizeof(GLint), &mesh.n_textures);
   glBindBuffer(GL_UNIFORM_BUFFER, GL_ZERO);
   assert(glGetError() == GL_NO_ERROR);
 }
@@ -617,19 +618,19 @@ void engine::set_blinn_phong(
 ) {
   math::matrix_4d model = translation * rotation * scalation;
 
-  glBindBufferRange(GL_UNIFORM_BUFFER, 0, mesh.vertex, 0, sizeof(float) * 60);
-  glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(float) * 16, model.values.data());
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 16, sizeof(float) * 16, view.values.data());
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 32, sizeof(float) * 16, projection.values.data());
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 48, sizeof(float) * 9, (view * model).Normal().values.data());
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 57, sizeof(float) * 3, std::vector<float>{lights[0].x, lights[0].y, lights[0].z}.data());
-  glBindBufferRange(GL_UNIFORM_BUFFER, 1, mesh.fragment, sizeof(float) * 60, sizeof(float) * 13 + sizeof(int));
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 60, sizeof(float) * 3, mesh.ambient.data());
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 63, sizeof(float) * 3, mesh.diffuse.data());
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 66, sizeof(float) * 3, mesh.specular.data());
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 69, sizeof(float) * 3, mesh.emissive.data());
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 72, sizeof(float), &mesh.shininess);
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(float) * 73, sizeof(int), &mesh.n_textures);
+  glBindBufferRange(GL_UNIFORM_BUFFER, 0, mesh.vertex, 0, sizeof(GLfloat) * 60);
+  glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GLfloat) * 16, model.values.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 16, sizeof(GLfloat) * 16, view.values.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 32, sizeof(GLfloat) * 16, projection.values.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 48, sizeof(GLfloat) * 9, &glm::transpose(glm::inverse(glm::make_mat4((view * model).values.data())))[0][0]);
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 57, sizeof(GLfloat) * 3, std::vector<GLfloat>{lights[0].x, lights[0].y, lights[0].z}.data());
+  glBindBufferRange(GL_UNIFORM_BUFFER, 1, mesh.fragment, sizeof(GLfloat) * 60, sizeof(GLfloat) * 13 + sizeof(GLint));
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 60, sizeof(GLfloat) * 3, mesh.ambient.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 63, sizeof(GLfloat) * 3, mesh.diffuse.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 66, sizeof(GLfloat) * 3, mesh.specular.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 69, sizeof(GLfloat) * 3, mesh.emissive.data());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 72, sizeof(GLfloat), &mesh.shininess);
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 73, sizeof(GLint), &mesh.n_textures);
   glBindBuffer(GL_UNIFORM_BUFFER, GL_ZERO);
   assert(glGetError() == GL_NO_ERROR);
 }

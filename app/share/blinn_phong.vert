@@ -19,11 +19,12 @@ out vec3 light;
 void main(void)
 {
     vec4 v_position = vec4(in_position, 1.0);
-    vec4 l_position = vec4(light_position, 1.0);
+    vec4 l_position = vec4(-light_position, 1.0);
     mat4 view_model = view * model;
+
     gl_Position = projection * view_model * v_position;
 
     eye = normalize(-vec3(view_model * v_position));
     normal = normalize(m_normal * in_normal);
-    light = normalize(vec3(l_position - model * v_position));
+    light = normalize(vec3(view * l_position - view_model * v_position));
 }
