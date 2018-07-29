@@ -46,12 +46,13 @@ type& graph<type>::get(node node) {
   return nodes[node.id].value();
 }
 
-template gl::graph<gl::model>::graph();
-template gl::node* gl::graph<gl::model>::set_root(gl::model);
-template gl::node* gl::graph<gl::model>::set_child(gl::node, gl::model);
-template gl::model& gl::graph<gl::model>::get(gl::node);
+template graph<model>::graph();
+template node* graph<model>::set_root(model);
+template node* graph<model>::set_child(node, model);
+template model& graph<model>::get(node);
+template model& graph<model>::get(node);
 
-graph<model>* gl::bltz::load(std::string filename)
+graph<model>* bltz::load(std::string filename)
 {
   graph<model>* scene_graph = new graph<model>();
   scene scene = std::vector<mesh>();
@@ -59,7 +60,7 @@ graph<model>* gl::bltz::load(std::string filename)
   math::vector_3d t = math::vector_3d::kZero;
   math::quaternion r = math::quaternion::kZero;
   math::vector_3d s = math::vector_3d::kZero;
-  bool l = false;
+  mesh_type mt = invisible;
   vertex_type v = v_none;
   fragment_type f = f_none;
   size_t n = 0;
@@ -122,12 +123,12 @@ graph<model>* gl::bltz::load(std::string filename)
         std::stof(tokens[2])
       );
     }
-    else if (prefix.compare("l") == 0) {
-      l = std::stoi(tokens[0]) == 1;
+    else if (prefix.compare("mt") == 0) {
+      mt = static_cast<mesh_type>(std::stoi(tokens[0]));
 
-      if (l) {
+      if (mt == light || mt == invisible) {
         scene.push_back(
-          mesh { true }
+          mesh { light }
         );
       }
     }
@@ -169,14 +170,11 @@ graph<model>* gl::bltz::load(std::string filename)
     }
     else if (prefix.compare("o5") == 0) {
       o5 = std::stof(tokens[0]);
-    }
-    else if (prefix.compare("o6") == 0) {
-      o6 = std::stoi(tokens[0]);
 
-      if (!o6) {
+      if (mt == plain) {
         scene.push_back(
           mesh{
-            false,
+            plain,
             v,
             f,
             fv,
@@ -190,8 +188,7 @@ graph<model>* gl::bltz::load(std::string filename)
             o2,
             o3,
             o4,
-            o5,
-            o6
+            o5
           }
         );
       }
@@ -232,7 +229,7 @@ graph<model>* gl::bltz::load(std::string filename)
 
       scene.push_back(
         mesh{
-          false,
+          regular,
           v,
           f,
           fv,
@@ -247,7 +244,6 @@ graph<model>* gl::bltz::load(std::string filename)
           o3,
           o4,
           o5,
-          o6,
           o7,
           o8,
           o9,
@@ -284,8 +280,8 @@ void bltz::save(graph<model> scene_graph, std::string filename)
     file << "r " << node.object.orientation.x << " " << node.object.orientation.y << " " << node.object.orientation.z << " " << node.object.orientation.w << std::endl;
     file << "s " << node.scale[0][0] << " " << node.scale[1][1] << " " << node.scale[2][2] << std::endl;
     for (auto mesh : scene_graph.nodes[i].value().scene_info) {
-      file << "l " << mesh.is_light << std::endl;
-      if (mesh.is_light) {
+      file << "mt " << mesh.type << std::endl;
+      if (mesh.type == light || mesh.type == invisible) {
         continue;
       }
       file << "v " << mesh.vertex_type << std::endl;
@@ -304,7 +300,9 @@ void bltz::save(graph<model> scene_graph, std::string filename)
       file << "o4 " << mesh.vertex << std::endl;
       file << "o5 " << mesh.fragment << std::endl;
 
-      file << "o6 " << mesh.has_material << std::endl;
+      if (mesh.type == plain) {
+        continue;
+      }
       file << "o7 " << mesh.ambient[0] << " " << mesh.ambient[1] << " " << mesh.ambient[2] << std::endl;
       file << "o8 " << mesh.diffuse[0] << " " << mesh.diffuse[1] << " " << mesh.diffuse[2] << std::endl;
       file << "o9 " << mesh.specular[0] << " " << mesh.specular[1] << " " << mesh.specular[2] << std::endl;

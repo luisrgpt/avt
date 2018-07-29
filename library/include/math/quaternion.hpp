@@ -38,6 +38,7 @@ namespace math {
     const quaternion operator* (const float& scalar) const;
     const quaternion operator* (const int& scalar) const;
     const quaternion operator* (const quaternion& other_quaternion) const;
+    quaternion& operator*= (const quaternion& other_quaternion);
     const vector_3d operator* (const vector_3d& other_vector) const;
     const quaternion operator/ (const float& scalar) const;
     const quaternion operator/ (const int& scalar) const;

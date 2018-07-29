@@ -371,7 +371,7 @@ scene* engine::load_scene(program program, fs::obj obj, fs::mtl mtl) {
         if (mtl.newmtl[i].compare(usemtl) == 0) {
           scene->push_back(
             mesh{
-              false,
+              regular,
               vertex_type,
               fragment_type,
               this->programs[program.id].shader_filenames[gl::vertex],
@@ -387,7 +387,6 @@ scene* engine::load_scene(program program, fs::obj obj, fs::mtl mtl) {
               mvp_id,
               mvp_id,
 
-              true,
               mtl.Ka[i],
               mtl.Kd[i],
               mtl.Ks[i],
@@ -403,7 +402,8 @@ scene* engine::load_scene(program program, fs::obj obj, fs::mtl mtl) {
     else {
       scene->push_back(
         mesh{
-          false,
+          plain,
+
           vertex_type,
           fragment_type,
           this->programs[program.id].shader_filenames[gl::vertex],
@@ -416,8 +416,6 @@ scene* engine::load_scene(program program, fs::obj obj, fs::mtl mtl) {
           program.id,
           0,
           0,
-
-          false
         }
       );
     }
@@ -493,11 +491,18 @@ void engine::draw(
     auto node = scene_graph.nodes[i].value();
     auto parent_id = scene_graph.edges[i].id;
 
-    translations.push_back(math::matrix_3d::Translation(node.object.position.x, node.object.position.y, node.object.position.z) * translations[parent_id]);
-    rotations.push_back(math::matrix_4d(node.object.orientation) * rotations[parent_id]);
-    scalations.push_back(node.scale * scalations[parent_id]);
+    if (node.scene_info[0].type != invisible) {
+      translations.push_back(math::matrix_3d::Translation(node.object.position.x, node.object.position.y, node.object.position.z) * translations[parent_id]);
+      rotations.push_back(math::matrix_4d(node.object.orientation) * rotations[parent_id]);
+      scalations.push_back(node.scale/* * scalations[parent_id]*/);
+    }
+    else {
+      translations.push_back(translations[parent_id]);
+      rotations.push_back(rotations[parent_id]);
+      scalations.push_back(scalations[parent_id]);
+    }
 
-    if (node.scene_info[0].is_light) {
+    if (node.scene_info[0].type == light) {
       math::vector_4d vector4(node.object.position.x, node.object.position.y, node.object.position.z, 1.0f);
       vector4 = translations.back() * vector4;
       lights.push_back(math::vector_3d(vector4.x, vector4.y, vector4.z));
@@ -508,7 +513,7 @@ void engine::draw(
   // Draw meshes
   for (auto i = 1u; i < scene_graph.nodes.size(); i++) {
     for (auto mesh : scene_graph.nodes[i].value().scene_info) {
-      if (mesh.is_light) {
+      if (mesh.type == light || mesh.type == invisible) {
         continue;
       }
 

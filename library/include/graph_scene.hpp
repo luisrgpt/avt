@@ -11,8 +11,17 @@
 #include "shaders.hpp"
 
 namespace gl {
+  enum mesh_type {
+    invisible,
+    light,
+    billboard,
+    plain,
+    regular
+  };
+
   struct mesh {
-    bool is_light;
+    mesh_type type;
+
     vertex_type vertex_type;
     fragment_type fragment_type;
 
@@ -29,7 +38,6 @@ namespace gl {
     unsigned vertex;
     unsigned fragment;
 
-    bool has_material;
     std::array<float, 3> ambient;
     std::array<float, 3> diffuse;
     std::array<float, 3> specular;
@@ -38,7 +46,6 @@ namespace gl {
     int n_textures;
   };
   typedef std::vector<mesh> scene;
-  scene light = { mesh{ true } };
 
   class model {
   public:

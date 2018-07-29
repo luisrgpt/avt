@@ -103,6 +103,21 @@ const quaternion quaternion::operator*(const quaternion& qo) const {
   );
 }
 
+quaternion& quaternion::operator*=(const quaternion& qo) {
+  // Operator * overload
+  auto x = this->w * qo.x + this->x * qo.w + this->y * qo.z - this->z * qo.y;
+  auto y = this->w * qo.y + this->y * qo.w + this->z * qo.x - this->x * qo.z;
+  auto z = this->w * qo.z + this->z * qo.w + this->x * qo.y - this->y * qo.x;
+  auto w = this->w * qo.w - this->x * qo.x - this->y * qo.y - this->z * qo.z;
+
+  this->x = x;
+  this->y = y;
+  this->z = z;
+  this->w = w;
+
+  return (*this);
+}
+
 const vector_3d quaternion::operator*(const vector_3d& other_vector) const {
   // Operator * overload
   vector_3d vector(this->x, this->y, this->z);

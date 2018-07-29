@@ -80,8 +80,6 @@ namespace gl {
     engine(int*, char**, std::string, unsigned, unsigned);
     ~engine();
 
-    static scene light;
-
     bool left_button_is_down(int, int);
     bool left_button_is_up(int, int);
     bool right_button_is_down(int, int);
