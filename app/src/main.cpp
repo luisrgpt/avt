@@ -17,7 +17,7 @@
 int score = 0;
 int lifes = 3;
 int angle = 160;
-float ball_speed = 0.5f;
+float ball_speed = 0.3f;
 float ship_speed = 0.8f;
 float ship_size = 2.4f;
 
