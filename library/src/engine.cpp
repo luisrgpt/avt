@@ -3,7 +3,11 @@
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 #include <iostream>
+#include <cmath>
+
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtc/type_ptr.hpp>
+//#include <gli/gli.hpp>
 
 using namespace gl;
 
@@ -424,7 +428,127 @@ scene* engine::load_scene(program program, fs::obj obj, fs::mtl mtl) {
   return scene;
 }
 template scene* engine::load_scene<blinn_phong_vertex, blinn_phong_fragment>(program program, fs::obj obj, fs::mtl mtl);
+template scene* engine::load_scene<particles_vertex, particles_fragment>(program program, fs::obj obj, fs::mtl mtl);
 template scene* engine::load_scene<flat_vertex, flat_fragment>(program program, fs::obj obj, fs::mtl mtl);
+
+//texture* engine::load_texture(program program, std::string filename) {
+//  gli::texture Texture = gli::load(filename);
+//  if (Texture.empty())
+//    return 0;
+//
+//  gli::gl GL(gli::gl::PROFILE_GL33);
+//  gli::gl::format const Format = GL.translate(Texture.format(), Texture.swizzles());
+//  GLenum Target = GL.translate(Texture.target());
+//
+//  GLuint TextureName = 0;
+//  glGenTextures(1, &TextureName);
+//  glBindTexture(Target, TextureName);
+//  glTexParameteri(Target, GL_TEXTURE_BASE_LEVEL, 0);
+//  glTexParameteri(Target, GL_TEXTURE_MAX_LEVEL, static_cast<GLint>(Texture.levels() - 1));
+//  glTexParameteri(Target, GL_TEXTURE_SWIZZLE_R, Format.Swizzles[0]);
+//  glTexParameteri(Target, GL_TEXTURE_SWIZZLE_G, Format.Swizzles[1]);
+//  glTexParameteri(Target, GL_TEXTURE_SWIZZLE_B, Format.Swizzles[2]);
+//  glTexParameteri(Target, GL_TEXTURE_SWIZZLE_A, Format.Swizzles[3]);
+//
+//  glm::tvec3<GLsizei> const Extent(Texture.extent());
+//  GLsizei const FaceTotal = static_cast<GLsizei>(Texture.layers() * Texture.faces());
+//
+//  switch (Texture.target())
+//  {
+//  case gli::TARGET_1D:
+//    glTexStorage1D(
+//      Target, static_cast<GLint>(Texture.levels()), Format.Internal, Extent.x);
+//    break;
+//  case gli::TARGET_1D_ARRAY:
+//  case gli::TARGET_2D:
+//  case gli::TARGET_CUBE:
+//    glTexStorage2D(
+//      Target, static_cast<GLint>(Texture.levels()), Format.Internal,
+//      Extent.x, Texture.target() == gli::TARGET_2D ? Extent.y : FaceTotal);
+//    break;
+//  case gli::TARGET_2D_ARRAY:
+//  case gli::TARGET_3D:
+//  case gli::TARGET_CUBE_ARRAY:
+//    glTexStorage3D(
+//      Target, static_cast<GLint>(Texture.levels()), Format.Internal,
+//      Extent.x, Extent.y,
+//      Texture.target() == gli::TARGET_3D ? Extent.z : FaceTotal);
+//    break;
+//  default:
+//    assert(0);
+//    break;
+//  }
+//
+//  for (std::size_t Layer = 0; Layer < Texture.layers(); ++Layer)
+//    for (std::size_t Face = 0; Face < Texture.faces(); ++Face)
+//      for (std::size_t Level = 0; Level < Texture.levels(); ++Level)
+//      {
+//        GLsizei const LayerGL = static_cast<GLsizei>(Layer);
+//        glm::tvec3<GLsizei> Extent(Texture.extent(Level));
+//        Target = gli::is_target_cube(Texture.target())
+//          ? static_cast<GLenum>(GL_TEXTURE_CUBE_MAP_POSITIVE_X + Face)
+//          : Target;
+//
+//        switch (Texture.target())
+//        {
+//        case gli::TARGET_1D:
+//          if (gli::is_compressed(Texture.format()))
+//            glCompressedTexSubImage1D(
+//              Target, static_cast<GLint>(Level), 0, Extent.x,
+//              Format.Internal, static_cast<GLsizei>(Texture.size(Level)),
+//              Texture.data(Layer, Face, Level));
+//          else
+//            glTexSubImage1D(
+//              Target, static_cast<GLint>(Level), 0, Extent.x,
+//              Format.External, Format.Type,
+//              Texture.data(Layer, Face, Level));
+//          break;
+//        case gli::TARGET_1D_ARRAY:
+//        case gli::TARGET_2D:
+//        case gli::TARGET_CUBE:
+//          if (gli::is_compressed(Texture.format()))
+//            glCompressedTexSubImage2D(
+//              Target, static_cast<GLint>(Level),
+//              0, 0,
+//              Extent.x,
+//              Texture.target() == gli::TARGET_1D_ARRAY ? LayerGL : Extent.y,
+//              Format.Internal, static_cast<GLsizei>(Texture.size(Level)),
+//              Texture.data(Layer, Face, Level));
+//          else
+//            glTexSubImage2D(
+//              Target, static_cast<GLint>(Level),
+//              0, 0,
+//              Extent.x,
+//              Texture.target() == gli::TARGET_1D_ARRAY ? LayerGL : Extent.y,
+//              Format.External, Format.Type,
+//              Texture.data(Layer, Face, Level));
+//          break;
+//        case gli::TARGET_2D_ARRAY:
+//        case gli::TARGET_3D:
+//        case gli::TARGET_CUBE_ARRAY:
+//          if (gli::is_compressed(Texture.format()))
+//            glCompressedTexSubImage3D(
+//              Target, static_cast<GLint>(Level),
+//              0, 0, 0,
+//              Extent.x, Extent.y,
+//              Texture.target() == gli::TARGET_3D ? Extent.z : LayerGL,
+//              Format.Internal, static_cast<GLsizei>(Texture.size(Level)),
+//              Texture.data(Layer, Face, Level));
+//          else
+//            glTexSubImage3D(
+//              Target, static_cast<GLint>(Level),
+//              0, 0, 0,
+//              Extent.x, Extent.y,
+//              Texture.target() == gli::TARGET_3D ? Extent.z : LayerGL,
+//              Format.External, Format.Type,
+//              Texture.data(Layer, Face, Level));
+//          break;
+//        default: assert(0); break;
+//        }
+//      }
+//  return new texture{ TextureName };
+//}
+
 void engine::use(program program) {
   assert(this->programs[program.id].state == linked);
 
@@ -459,30 +583,32 @@ void engine::draw(mesh scene) {
 }
 void engine::draw(
   graph<model> scene_graph,
-  camera camera
-) {
-  this->draw(
-    std::cref(scene_graph),
-    std::cref(camera.projection.matrix),
-    std::cref(camera.view.matrix)
-  );
-}
-void engine::draw(
-  graph<model> scene_graph,
-  free_camera camera
-) {
-  this->draw(
-    std::cref(scene_graph),
-    std::cref(camera.projection.matrix),
-    std::cref(camera.view.matrix)
-  );
-}
-void engine::draw(
-  graph<model> scene_graph,
-  math::matrix_4d projection,
-  math::matrix_4d view
+  camera camera,
+  directional_light d_light
+//) {
+//  this->draw(
+//    std::cref(scene_graph),
+//    std::cref(camera.projection.matrix),
+//    std::cref(camera.view.matrix)
+//  );
+//}
+//void engine::draw(
+//  graph<model> scene_graph,
+//  free_camera camera
+//) {
+//  this->draw(
+//    std::cref(scene_graph),
+//    std::cref(camera.projection.matrix),
+//    std::cref(camera.view.matrix)
+//  );
+//}
+//void engine::draw(
+//  graph<model> scene_graph,
+//  math::matrix_4d projection,
+//  math::matrix_4d view
 ) {
   illumination lights;
+  std::vector<math::vector_4d> lights_position;
   std::vector<math::matrix_4d> translations = { math::matrix_4d::kIdentity };
   std::vector<math::matrix_4d> rotations = { math::matrix_4d::kIdentity };
   std::vector<math::matrix_4d> scalations = { math::matrix_4d::kIdentity };
@@ -492,22 +618,29 @@ void engine::draw(
     auto node = scene_graph.nodes[i].value();
     auto parent_id = scene_graph.edges[i].id;
 
-    if (node.scene_info[0].type != invisible) {
-      translations.push_back(math::matrix_3d::Translation(node.object.position.x, node.object.position.y, node.object.position.z) * translations[parent_id]);
-      rotations.push_back(math::matrix_4d(node.object.orientation) * rotations[parent_id]);
-      scalations.push_back(node.scale/* * scalations[parent_id]*/);
-    }
-    else {
-      translations.push_back(translations[parent_id]);
-      rotations.push_back(rotations[parent_id]);
-      scalations.push_back(scalations[parent_id]);
+    switch (node.scene_info[0].type) {
+      case invisible:
+        translations.push_back(translations[parent_id]);
+        rotations.push_back(rotations[parent_id]);
+        scalations.push_back(scalations[parent_id]);
+        break;
+      case billboard:
+        translations.push_back(math::matrix_3d::Translation(node.object.position.x, node.object.position.y, node.object.position.z) * translations[parent_id]);
+        rotations.push_back(math::matrix_4d(camera.view.object.orientation));
+        scalations.push_back((camera.view.object.position - node.object.position).Norm() * node.scale/* * scalations[parent_id]*/);
+        break;
+      default:
+        translations.push_back(math::matrix_3d::Translation(node.object.position.x, node.object.position.y, node.object.position.z) * translations[parent_id]);
+        rotations.push_back(math::matrix_4d(node.object.orientation) * rotations[parent_id]);
+        scalations.push_back(node.scale/* * scalations[parent_id]*/);
+        break;
     }
 
     if (node.scene_info[0].type == light) {
-      math::vector_4d vector4(node.object.position.x, node.object.position.y, node.object.position.z, 1.0f);
-      vector4 = translations.back() * vector4;
-      lights.push_back(math::vector_3d(vector4.x, vector4.y, vector4.z));
-      //std::cout << light.x << " " << light.y << " " << light.z << std::endl;
+      math::vector_4d vector4(translations.back()[3][0], translations.back()[3][1], translations.back()[3][2], 1.0f);
+
+      lights.push_back(node);
+      lights_position.push_back(vector4);
     }
   }
 
@@ -552,8 +685,19 @@ void engine::draw(
       case v_flat:
         this->set_flat(
           mesh,
-          projection,
-          view,
+          camera.projection.matrix,
+          camera.view.matrix,
+          translations[i],
+          rotations[i],
+          scalations[i]
+        );
+        break;
+      case v_particles:
+        this->set_particles(
+          current_program_id,
+          mesh, lights,
+          camera.projection.matrix,
+          camera.view.matrix,
           translations[i],
           rotations[i],
           scalations[i]
@@ -561,9 +705,12 @@ void engine::draw(
         break;
       case v_blinn_phong_vertex:
         this->set_blinn_phong(
+          current_program_id,
           mesh, lights,
-          projection,
-          view,
+          d_light,
+          lights_position,
+          camera.projection.matrix,
+          camera.view.matrix,
           translations[i],
           rotations[i],
           scalations[i]
@@ -571,7 +718,15 @@ void engine::draw(
         break;
       }
 
-      glDrawArrays(GL_TRIANGLES, 0, (GLsizei)mesh.n_faces * 3);
+      switch (mesh.type) {
+      case particles:
+        glDrawArrays(GL_POINTS, 0, (GLsizei)mesh.n_faces * 3);
+        break;
+
+      default:
+        glDrawArrays(GL_TRIANGLES, 0, (GLsizei)mesh.n_faces * 3);
+        break;
+      }
       assert(glGetError() == GL_NO_ERROR);
     }
   }
@@ -607,7 +762,9 @@ void engine::set_flat(
   assert(glGetError() == GL_NO_ERROR);
 }
 
-void engine::set_blinn_phong(
+
+void engine::set_particles(
+  unsigned id,
   mesh mesh,
   illumination lights,
   math::matrix_4d projection,
@@ -618,20 +775,117 @@ void engine::set_blinn_phong(
 ) {
   math::matrix_4d model = translation * rotation * scalation;
 
-  glBindBufferRange(GL_UNIFORM_BUFFER, 0, mesh.vertex, 0, sizeof(GLfloat) * 60);
-  glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GLfloat) * 16, model.values.data());
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 16, sizeof(GLfloat) * 16, view.values.data());
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 32, sizeof(GLfloat) * 16, projection.values.data());
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 48, sizeof(GLfloat) * 9, &glm::transpose(glm::inverse(glm::make_mat4((view * model).values.data())))[0][0]);
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 57, sizeof(GLfloat) * 3, std::vector<GLfloat>{lights[0].x, lights[0].y, lights[0].z}.data());
-  glBindBufferRange(GL_UNIFORM_BUFFER, 1, mesh.fragment, sizeof(GLfloat) * 60, sizeof(GLfloat) * 13 + sizeof(GLint));
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 60, sizeof(GLfloat) * 3, mesh.ambient.data());
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 63, sizeof(GLfloat) * 3, mesh.diffuse.data());
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 66, sizeof(GLfloat) * 3, mesh.specular.data());
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 69, sizeof(GLfloat) * 3, mesh.emissive.data());
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 72, sizeof(GLfloat), &mesh.shininess);
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 73, sizeof(GLint), &mesh.n_textures);
-  glBindBuffer(GL_UNIFORM_BUFFER, GL_ZERO);
+  auto loc = glGetUniformLocation(id, "model"); glUniformMatrix4fv(loc, 1, GL_FALSE, model.values.data());
+  loc = glGetUniformLocation(id, "view"); glUniformMatrix4fv(loc, 1, GL_FALSE, view.values.data());
+  loc = glGetUniformLocation(id, "projection"); glUniformMatrix4fv(loc, 1, GL_FALSE, projection.values.data());
+  loc = glGetUniformLocation(id, "dispersion0"); glUniform3fv(loc, 1, std::array<float, 3>{(rand() % 2 - 1.0f) / 10, (rand() % 2 - 1.0f) / 10, (rand() % 2 - 1.0f) / 10}.data());
+  loc = glGetUniformLocation(id, "dispersion1"); glUniform3fv(loc, 1, std::array<float, 3>{(rand() % 2 - 1.0f) / 10, (rand() % 2 - 1.0f) / 10, (rand() % 2 - 1.0f) / 10}.data());
+  loc = glGetUniformLocation(id, "dispersion2"); glUniform3fv(loc, 1, std::array<float, 3>{(rand() % 2 - 1.0f) / 10, (rand() % 2 - 1.0f) / 10, (rand() % 2 - 1.0f) / 10}.data());
+  loc = glGetUniformLocation(id, "dispersion3"); glUniform3fv(loc, 1, std::array<float, 3>{(rand() % 2 - 1.0f) / 10, (rand() % 2 - 1.0f) / 10, (rand() % 2 - 1.0f) / 10}.data());
+
+}
+
+void engine::set_blinn_phong(
+  unsigned id,
+  mesh mesh,
+  illumination lights,
+  directional_light d_light,
+  std::vector<math::vector_4d> lights_position,
+  math::matrix_4d projection,
+  math::matrix_4d view,
+  math::matrix_4d translation,
+  math::matrix_4d rotation,
+  math::matrix_4d scalation
+) {
+  math::matrix_4d model = translation * rotation * scalation;
+
+  constexpr int t = sizeof(GLfloat) * 67 + sizeof(GLint);
+
+  auto mode = (GLint)(mesh.type == textured);
+
+  //std::vector<GLfloat>{lights[0].x, lights[0].y, lights[0].z}.data();
+
+  
+  //auto carro = aux3 + lights[0].object.orientation * math::vector_3d(0.0f, 0.0f, -1.0f);
+
+  #define DEGREES_TO_RADIANS 0.01745329251994329547
+
+  auto aux = lights_position[0]; std::array<GLfloat, 3> light_position0 = { aux.x, aux.y, aux.z };
+  aux = lights_position[1]; std::array<GLfloat, 3> light_position1 = { aux.x, aux.y, aux.z };
+  aux = lights_position[2]; std::array<GLfloat, 3> light_position2 = { aux.x, aux.y, aux.z };
+  aux = lights_position[3]; std::array<GLfloat, 3> light_position3 = { aux.x, aux.y, aux.z };
+  aux = lights_position[4]; std::array<GLfloat, 3> light_position4 = { aux.x, aux.y, aux.z };
+  //std::array<GLfloat, 3> light_direction = { carro.x, carro.y, carro.z };
+  std::array<GLfloat, 3> light_direction = { 0,0,0 };
+  std::array<GLfloat, 3> light_color = {1, 1, 1};
+  GLfloat light_Ka = 0.5;
+  GLfloat light_angle = 20 * DEGREES_TO_RADIANS;
+  GLfloat light_attenuation = 0.1;
+  //constexpr int aaaa = sizeof(GLfloat) * 73 + sizeof(GLint) + 8;
+  //constexpr int aaaa = sizeof(blinn_phong_vertex);;
+  constexpr int aaaa = sizeof(blinn_phong_fragment);
+
+  //std::cout << light_direction[0] << " " << light_direction[1] << " " << light_direction[2] << std::endl;
+
+
+  constexpr unsigned size = sizeof(GLfloat) * 16 + sizeof(GLint) * 2 + 6;
+
+  int on_or_off0 = lights[0].object.velocity.x;
+  int on_or_off1 = lights[1].object.velocity.x;
+  int on_or_off2 = lights[2].object.velocity.x;
+  int on_or_off3 = lights[3].object.velocity.x;
+  int on_or_off4 = lights[4].object.velocity.x;
+
+  int is_main0 = lights[0].object.velocity.y;
+  int is_main1 = lights[1].object.velocity.y;
+  int is_main2 = lights[2].object.velocity.y;
+  int is_main3 = lights[3].object.velocity.y;
+  int is_main4 = lights[4].object.velocity.y;
+
+  auto loc = glGetUniformLocation(id, "model"); glUniformMatrix4fv(loc, 1, GL_FALSE, model.values.data());
+  loc = glGetUniformLocation(id, "view"); glUniformMatrix4fv(loc, 1, GL_FALSE, view.values.data());
+  loc = glGetUniformLocation(id, "projection"); glUniformMatrix4fv(loc, 1, GL_FALSE, projection.values.data());
+  loc = glGetUniformLocation(id, "m_normal"); glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(glm::transpose(glm::inverse(glm::make_mat4((view * model).values.data())))));
+  loc = glGetUniformLocation(id, "light_position0"); glUniform3fv(loc, 1, light_position0.data());
+  loc = glGetUniformLocation(id, "light_position1"); glUniform3fv(loc, 1, light_position1.data());
+  loc = glGetUniformLocation(id, "light_position2"); glUniform3fv(loc, 1, light_position2.data());
+  loc = glGetUniformLocation(id, "light_position3"); glUniform3fv(loc, 1, light_position3.data());
+  loc = glGetUniformLocation(id, "light_position4"); glUniform3fv(loc, 1, light_position4.data());
+  loc = glGetUniformLocation(id, "light_Ka"); glUniform1fv(loc, 1, &light_Ka);
+  loc = glGetUniformLocation(id, "v_mode"); glUniform1iv(loc, 1, &mode);
+
+  loc = glGetUniformLocation(id, "Ka"); glUniform3fv(loc, 1, mesh.ambient.data());
+  loc = glGetUniformLocation(id, "Kd"); glUniform3fv(loc, 1, mesh.diffuse.data());
+  loc = glGetUniformLocation(id, "Ks"); glUniform3fv(loc, 1, mesh.specular.data());
+  loc = glGetUniformLocation(id, "Ke"); glUniform3fv(loc, 1, mesh.emissive.data());
+  loc = glGetUniformLocation(id, "shininess"); glUniform1fv(loc, 1, &mesh.shininess);
+  loc = glGetUniformLocation(id, "text_count"); glUniform1iv(loc, 1, &mesh.n_textures);
+  loc = glGetUniformLocation(id, "light_color"); glUniform3fv(loc, 1, light_color.data());
+  loc = glGetUniformLocation(id, "f_mode"); glUniform1iv(loc, 1, &mode);
+  loc = glGetUniformLocation(id, "light_attenuation"); glUniform1fv(loc, 1, &light_attenuation);
+  loc = glGetUniformLocation(id, "light_angle"); glUniform1fv(loc, 1, &light_angle);
+  loc = glGetUniformLocation(id, "on_or_off0"); glUniform1iv(loc, 1, &on_or_off0);
+  loc = glGetUniformLocation(id, "on_or_off1"); glUniform1iv(loc, 1, &on_or_off1);
+  loc = glGetUniformLocation(id, "on_or_off2"); glUniform1iv(loc, 1, &on_or_off2);
+  loc = glGetUniformLocation(id, "on_or_off3"); glUniform1iv(loc, 1, &on_or_off3);
+  loc = glGetUniformLocation(id, "on_or_off4"); glUniform1iv(loc, 1, &on_or_off4);
+  loc = glGetUniformLocation(id, "is_main0"); glUniform1iv(loc, 1, &is_main0);
+  loc = glGetUniformLocation(id, "is_main1"); glUniform1iv(loc, 1, &is_main1);
+  loc = glGetUniformLocation(id, "is_main2"); glUniform1iv(loc, 1, &is_main2);
+  loc = glGetUniformLocation(id, "is_main3"); glUniform1iv(loc, 1, &is_main3);
+  loc = glGetUniformLocation(id, "is_main4"); glUniform1iv(loc, 1, &is_main4);
+  loc = glGetUniformLocation(id, "directional_light"); glUniform3fv(loc, 1, std::array<float, 3>{ d_light.position.x, d_light.position.y, d_light.position.z }.data());
+  loc = glGetUniformLocation(id, "directional_light_state"); glUniform1iv(loc, 1, &d_light.state);
+
+  //glBindBufferRange(GL_UNIFORM_BUFFER, 1, mesh.fragment, sizeof(GLfloat) * 73 + sizeof(GLint) + 8, sizeof(GLfloat) * 16 + sizeof(GLint) * 2 + 8);
+  //glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 73 + sizeof(GLint) + 8, sizeof(GLfloat) * 3, mesh.ambient.data());
+  //glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 76 + sizeof(GLint) + 8, sizeof(GLfloat) * 3, mesh.diffuse.data());
+  //glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 79 + sizeof(GLint) + 8, sizeof(GLfloat) * 3, mesh.specular.data());
+  //glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 82 + sizeof(GLint) + 8, sizeof(GLfloat) * 3, mesh.emissive.data());
+  //glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 85 + sizeof(GLint) + 8, sizeof(GLfloat), &mesh.shininess);
+  //glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 86 + sizeof(GLint) + 8, sizeof(GLint), &mesh.n_textures);
+  //glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 86 + sizeof(GLint) * 2 + 8, sizeof(GLfloat) * 3, light_color.data());
+  //glBufferSubData(GL_UNIFORM_BUFFER, sizeof(GLfloat) * 89 + sizeof(GLint) * 2 + 8, sizeof(GLint), &mode);
   assert(glGetError() == GL_NO_ERROR);
 }
 

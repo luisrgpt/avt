@@ -28,6 +28,15 @@
     <None Include="share\blinn_phong.vert">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="share\particles.geom">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="share\particles.frag">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="share\particles.vert">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">

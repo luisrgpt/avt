@@ -17,7 +17,7 @@
 int score = 0;
 int lifes = 3;
 int angle = 160;
-float ball_speed = 0.3f;
+float ball_speed = 0.5f;
 float ship_speed = 0.8f;
 float ship_size = 2.4f;
 
@@ -26,7 +26,7 @@ float ship_size = 2.4f;
 
 
 constexpr unsigned
-fps = 60,
+fps = 30,
 mhz = 1000 / fps,
 width = 1000,
 height = 800;
@@ -44,15 +44,12 @@ enum object_property {
 };
 
 gl::engine *engine;
-gl::program *flat;
-gl::program *blinn_phong;
 gl::graph<gl::model> *scene_graph;
 std::array<gl::camera, 3> *cameras;
 gl::graph<gl::model> *hud;
 gl::camera *hud_camera;
 fs::mtl *random_materials;
 gl::node *node_field;
-gl::node *node_light;
 gl::node *node_ship;
 gl::node *node_ball;
 std::vector<std::tuple<gl::node, object_property>> ball_obstacles;
@@ -61,6 +58,12 @@ gl::node *right_ship_obstacle;
 unsigned current_camera;
 ship_state state = none;
 bool ball_is_attached = true;
+
+gl::node *node_light;
+gl::node *node_light1;
+gl::node *node_light2;
+gl::node *node_light3;
+gl::node *node_light4;
 
 gl::scene* number;
 gl::scene *life;
@@ -75,7 +78,10 @@ gl::scene *scene_7;
 gl::scene *scene_8;
 gl::scene *scene_9;
 gl::scene *scene_game_over;
+gl::scene *scene_victory;
 gl::scene *scene_retry;
+
+gl::directional_light *d_light;
 
 void update_hud() {
   delete hud;
@@ -156,6 +162,26 @@ void update_hud() {
       )
     );
   }
+
+  if (score == 7800) {
+    hud->set_root(
+      gl::model(
+        *scene_victory,
+        math::vector_3d(0.3f, 0.3f, 0.3f),
+        math::vector_3d(0.0f, 0.0f, 0.0f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
+        math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+      )
+    );
+
+    hud->set_root(
+      gl::model(
+        *scene_retry,
+        math::vector_3d(0.2f, 0.2f, 0.2f),
+        math::vector_3d(0.0f, -0.2f, 0.0f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
+        math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+      )
+    );
+  }
 }
 
 /////////////////////////////////////////////////////////////////////// CALLBACKS
@@ -187,79 +213,157 @@ void keyboard(unsigned char key, int x, int y) {
     current_camera = 2;
     break;
 
-  //case 'a':
-  //  switch (state) {
-  //    case none:
-  //      state = left;
-  //      break;
-  //    case right:
-  //      state = none;
-  //      break;
-  //  }
-  //  break;
-  //case 'd':
-  //  switch (state) {
-  //  case none:
-  //    state = right;
-  //    break;
-  //  case left:
-  //    state = none;
-  //    break;
-  //  }
-  //  break;
-
-
-
-
-
   case 'a':
-      scene_graph->nodes[node_light->id].value().object.position += math::vector_3d(-1.0f, 0.0f, 0.0f);
+    switch (state) {
+      case none:
+        state = left;
+        break;
+      case right:
+        state = none;
+        break;
+    }
     break;
   case 'd':
-      scene_graph->nodes[node_light->id].value().object.position += math::vector_3d(1.0f, 0.0f, 0.0f);
-    break;
-  case 's':
-      scene_graph->nodes[node_light->id].value().object.position += math::vector_3d(0.0f, -1.0f, 0.0f);
-    break;
-  case 'w':
-      scene_graph->nodes[node_light->id].value().object.position += math::vector_3d(0.0f, 1.0f, 0.0f);
-    break;
-  case 'q':
-      scene_graph->nodes[node_light->id].value().object.position += math::vector_3d(0.0f, 0.0f, -1.0f);
-    break;
-  case 'e':
-      scene_graph->nodes[node_light->id].value().object.position += math::vector_3d(0.0f, 0.0f, 1.0f);
+    switch (state) {
+    case none:
+      state = right;
+      break;
+    case left:
+      state = none;
+      break;
+    }
     break;
 
 
-
-
-
-  case 'j':
-    scene_graph->nodes[node_field->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(0.0f, 1.0f, 0.0f)), 1));
+  case 'c':
+    if (scene_graph->nodes[node_light1->id].value().object.velocity.x == 1) {
+      scene_graph->nodes[node_light1->id].value().object.velocity.x = 0;
+      scene_graph->nodes[node_light2->id].value().object.velocity.x = 0;
+      scene_graph->nodes[node_light3->id].value().object.velocity.x = 0;
+      scene_graph->nodes[node_light4->id].value().object.velocity.x = 0;
+    }
+    else {
+      scene_graph->nodes[node_light1->id].value().object.velocity.x = 1;
+      scene_graph->nodes[node_light2->id].value().object.velocity.x = 1;
+      scene_graph->nodes[node_light3->id].value().object.velocity.x = 1;
+      scene_graph->nodes[node_light4->id].value().object.velocity.x = 1;
+    }
     break;
+
+
   case 'l':
-    scene_graph->nodes[node_field->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(0.0f, -1.0f, 0.0f)), 1));
+    if (d_light->state == 1) {
+      d_light->state = 0;
+    }
+    else {
+      d_light->state = 1;
+    }
     break;
-  case 'k':
-    scene_graph->nodes[node_field->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(-1.0f, 0.0f, 0.0f)), 1));
-    break;
-  case 'i':
-    scene_graph->nodes[node_field->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(1.0f, 0.0f, 0.0f)), 1));
-    break;
-  case 'u':
-    scene_graph->nodes[node_field->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(0.0f, 0.0f, 1.0f)), 1));
-    break;
-  case 'o':
-    scene_graph->nodes[node_field->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(0.0f, 0.0f, -1.0f)), 1));
-    break;
+
+
+  //case 'a':
+  //  scene_graph->nodes[node_light->id].value().object.position += math::vector_3d(-1.0f, 0.0f, 0.0f);
+  //  break;
+  //case 'd':
+  //  scene_graph->nodes[node_light->id].value().object.position += math::vector_3d(1.0f, 0.0f, 0.0f);
+  //  break;
+  //case 's':
+  //  scene_graph->nodes[node_light->id].value().object.position += math::vector_3d(0.0f, -1.0f, 0.0f);
+  //  break;
+  //case 'w':
+  //  scene_graph->nodes[node_light->id].value().object.position += math::vector_3d(0.0f, 1.0f, 0.0f);
+  //  break;
+  //case 'q':
+  //  scene_graph->nodes[node_light->id].value().object.position += math::vector_3d(0.0f, 0.0f, -1.0f);
+  //  break;
+  //case 'e':
+  //  scene_graph->nodes[node_light->id].value().object.position += math::vector_3d(0.0f, 0.0f, 1.0f);
+  //  break;
+
+  //case 'j':
+  //  scene_graph->nodes[node_light->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(0.0f, 1.0f, 0.0f)), 1));
+  //  break;
+  //case 'p':
+  //  scene_graph->nodes[node_light->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(0.0f, -1.0f, 0.0f)), 1));
+  //  break;
+  //case 'k':
+  //  scene_graph->nodes[node_light->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(-1.0f, 0.0f, 0.0f)), 1));
+  //  break;
+  //case 'i':
+  //  scene_graph->nodes[node_light->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(1.0f, 0.0f, 0.0f)), 1));
+  //  break;
+  //case 'u':
+  //  scene_graph->nodes[node_light->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(0.0f, 0.0f, 1.0f)), 1));
+  //  break;
+  //case 'o':
+  //  scene_graph->nodes[node_light->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(0.0f, 0.0f, -1.0f)), 1));
+  //  break;
+
+  //case 'j':
+  //  scene_graph->nodes[node_field->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(0.0f, 1.0f, 0.0f)), 1));
+  //  break;
+  //case 'l':
+  //  scene_graph->nodes[node_field->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(0.0f, -1.0f, 0.0f)), 1));
+  //  break;
+  //case 'k':
+  //  scene_graph->nodes[node_field->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(-1.0f, 0.0f, 0.0f)), 1));
+  //  break;
+  //case 'i':
+  //  scene_graph->nodes[node_field->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(1.0f, 0.0f, 0.0f)), 1));
+  //  break;
+  //case 'u':
+  //  scene_graph->nodes[node_field->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(0.0f, 0.0f, 1.0f)), 1));
+  //  break;
+  //case 'o':
+  //  scene_graph->nodes[node_field->id].value().object.execute(gl::rotation(math::quaternion(1, math::vector_3d(0.0f, 0.0f, -1.0f)), 1));
+  //  break;
+
+  //case 'a':
+  //  cameras->at(1).view.execute(gl::linear_movement(cameras->at(1).view.object.orientation * math::vector_3d(-1.0f, 0.0f, 0.0f), 1));
+  //  break;
+  //case 'd':
+  //  cameras->at(1).view.execute(gl::linear_movement(cameras->at(1).view.object.orientation * math::vector_3d(1.0f, 0.0f, 0.0f), 1));
+  //  break;
+  //case 's':
+  //  cameras->at(1).view.execute(gl::linear_movement(cameras->at(1).view.object.orientation * math::vector_3d(0.0f, -1.0f, 0.0f), 1));
+  //  break;
+  //case 'w':
+  //  cameras->at(1).view.execute(gl::linear_movement(cameras->at(1).view.object.orientation * math::vector_3d(0.0f, 1.0f, 0.0f), 1));
+  //  break;
+  //case 'q':
+  //  cameras->at(1).view.execute(gl::linear_movement(cameras->at(1).view.object.orientation * math::vector_3d(0.0f, 0.0f, -1.0f), 1));
+  //  break;
+  //case 'e':
+  //  cameras->at(1).view.execute(gl::linear_movement(cameras->at(1).view.object.orientation * math::vector_3d(0.0f, 0.0f, 1.0f), 1));
+  //  break;
+
+  //case 'j':
+  //    cameras->at(1).view.execute(gl::rotation(math::quaternion(1, cameras->at(1).view.object.orientation * math::vector_3d(0.0f, 1.0f, 0.0f)), 1));
+  //  break;
+  //case 'l':
+  //    cameras->at(1).view.execute(gl::rotation(math::quaternion(1, cameras->at(1).view.object.orientation * math::vector_3d(0.0f, -1.0f, 0.0f)), 1));
+  //  break;
+  //case 'k':
+  //    cameras->at(1).view.execute(gl::rotation(math::quaternion(1, cameras->at(1).view.object.orientation * math::vector_3d(-1.0f, 0.0f, 0.0f)), 1));
+  //  break;
+  //case 'i':
+  //    cameras->at(1).view.execute(gl::rotation(math::quaternion(1, cameras->at(1).view.object.orientation * math::vector_3d(1.0f, 0.0f, 0.0f)), 1));
+  //  break;
+  //case 'u':
+  //    cameras->at(1).view.execute(gl::rotation(math::quaternion(1, cameras->at(1).view.object.orientation * math::vector_3d(0.0f, 0.0f, 1.0f)), 1));
+  //  break;
+  //case 'o':
+  //    cameras->at(1).view.execute(gl::rotation(math::quaternion(1, cameras->at(1).view.object.orientation * math::vector_3d(0.0f, 0.0f, -1.0f)), 1));
+  //  break;
   }
+
+  //std::cout << scene_graph->nodes[node_light->id].value().object.orientation << std::endl;
 }
 
 void keyboard_up(unsigned char key, int x, int y) {
   switch (key) {
   case 'y':
-    if (lifes == 0) {
+    if (lifes == 0 || score == 7800) {
       scene_graph = gl::bltz::load("start.bltz");
       score = 0;
       lifes = 3;
@@ -268,30 +372,30 @@ void keyboard_up(unsigned char key, int x, int y) {
     }
     break;
   case 'n':
-    if (lifes == 0) {
+    if (lifes == 0 || score == 7800) {
       engine->end();
     }
     break;
 
-  //case 'a':
-  //  switch (state) {
-  //  case none:
-  //    state = right;
-  //    break;
-  //  case left:
-  //    state = none;
-  //    break;
-  //  }
-  //  break;
-  //case 'd':
-  //  switch (state) {
-  //  case none:
-  //    state = left;
-  //    break;
-  //  case right:
-  //    state = none;
-  //    break;
-  //  }
+  case 'a':
+    switch (state) {
+    case none:
+      state = right;
+      break;
+    case left:
+      state = none;
+      break;
+    }
+    break;
+  case 'd':
+    switch (state) {
+    case none:
+      state = left;
+      break;
+    case right:
+      state = none;
+      break;
+    }
   }
 }
 
@@ -327,7 +431,7 @@ void display() {
   }
 
   if (!ball_is_attached) {
-    if (lifes != 0) {
+    if (lifes != 0 && score != 7800) {
       auto ball = scene_graph->nodes[node_ball->id].value();
       auto ball_center = ball.object.position;
       auto speed = scene_graph->nodes[node_ball->id].value().object.orientation * math::vector_3d(0.0f, 1.0f, 0.0f);
@@ -335,6 +439,13 @@ void display() {
       auto ball_right_side = ball_center.x + ball.scale[0][0] / 2;
       auto ball_bottom_side = ball_center.y - ball.scale[1][1] / 2;
       auto ball_top_side = ball_center.y + ball.scale[1][1] / 2;
+
+      if (speed.y < 0) {
+        scene_graph->nodes[node_light->id].value().object.velocity.x = 1;
+      }
+      else {
+        scene_graph->nodes[node_light->id].value().object.velocity.x = 0;
+      }
 
       auto i = 0;
       for (auto obstacle : ball_obstacles) {
@@ -404,15 +515,17 @@ void display() {
   }
 
   engine->before_draw();
-  if (lifes != 0) {
+  if (lifes != 0 && score != 7800) {
     engine->draw(
       *scene_graph,
-      cameras->at(current_camera)
+      cameras->at(current_camera),
+      *d_light
     );
   }
   engine->draw(
     *hud,
-    *hud_camera
+    *hud_camera,
+    *d_light
   );
   engine->after_draw();
 }
@@ -437,12 +550,12 @@ int main(int argc, char **argv) {
   engine->set_mouse_callback(mouse);
   engine->set_timer_callback(0, timer, 0);
 
-  blinn_phong = engine->create_program();
+  auto blinn_phong = engine->create_program();
   engine->load_shader<gl::vertex>(*blinn_phong, "share/blinn_phong.vert");
   engine->load_shader<gl::fragment>(*blinn_phong, "share/blinn_phong.frag");
   engine->link(*blinn_phong);
 
-  flat = engine->create_program();
+  auto flat = engine->create_program();
   engine->load_shader<gl::vertex>(*flat, "share/flat.vert");
   engine->load_shader<gl::fragment>(*flat, "share/flat.frag");
   engine->link(*flat);
@@ -457,6 +570,9 @@ int main(int argc, char **argv) {
   fs::obj obj_wall("share/wall.obj");
   fs::obj obj_pipe("share/big_pipe.obj");
   fs::obj obj_border("share/border.obj");
+  fs::obj obj_star("share/star.obj");
+
+  fs::obj obj_laser("share/laser.obj");
 
   fs::obj obj_0("share/0.obj");
   fs::obj obj_1("share/1.obj");
@@ -470,6 +586,7 @@ int main(int argc, char **argv) {
   fs::obj obj_9("share/9.obj");
   fs::obj obj_retry("share/retry.obj");
   fs::obj obj_game_over("share/game_over.obj");
+  fs::obj obj_victory("share/victory.obj");
 
   gl::scene *field = engine->load_scene<gl::blinn_phong_vertex, gl::blinn_phong_fragment>(*blinn_phong, obj_field, materials);
   gl::scene *ship = engine->load_scene<gl::blinn_phong_vertex, gl::blinn_phong_fragment>(*blinn_phong, obj_ship, materials);
@@ -478,6 +595,9 @@ int main(int argc, char **argv) {
   gl::scene *big_pipe = engine->load_scene<gl::blinn_phong_vertex, gl::blinn_phong_fragment>(*blinn_phong, obj_pipe, materials);
   gl::scene *border = engine->load_scene<gl::blinn_phong_vertex, gl::blinn_phong_fragment>(*blinn_phong, obj_border, materials);
   gl::scene *wall = engine->load_scene<gl::blinn_phong_vertex, gl::blinn_phong_fragment>(*blinn_phong, obj_wall, materials);
+  gl::scene *star = engine->load_scene<gl::blinn_phong_vertex, gl::blinn_phong_fragment>(*blinn_phong, obj_star, materials);
+
+  gl::scene *laser = engine->load_scene<gl::particles_vertex, gl::particles_fragment>(*flat, obj_laser, materials);
 
   life = engine->load_scene<gl::flat_vertex, gl::flat_fragment>(*flat, obj_ship, materials);
   scene_0 = engine->load_scene<gl::flat_vertex, gl::flat_fragment>(*flat, obj_0, materials);
@@ -492,8 +612,12 @@ int main(int argc, char **argv) {
   scene_9 = engine->load_scene<gl::flat_vertex, gl::flat_fragment>(*flat, obj_9, materials);
   scene_retry = engine->load_scene<gl::flat_vertex, gl::flat_fragment>(*flat, obj_retry, materials);
   scene_game_over = engine->load_scene<gl::flat_vertex, gl::flat_fragment>(*flat, obj_game_over, materials);
+  scene_victory = engine->load_scene<gl::flat_vertex, gl::flat_fragment>(*flat, obj_victory, materials);
 
   scene_graph = new gl::graph<gl::model>();
+
+  d_light = new gl::directional_light{ math::vector_3d(0.0f, 14.5f, 5.0f) };
+
   node_field = scene_graph->set_root(
     gl::model(
       *field,
@@ -502,13 +626,40 @@ int main(int argc, char **argv) {
       math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
     )
   );
-  node_light = scene_graph->set_child(
+  node_light1 = scene_graph->set_child(
     *node_field,
     gl::model(
-      {gl::mesh{ gl::light }},
+      { gl::mesh{ gl::light } },
       math::vector_3d(0, 0, 0),
-      math::vector_3d(0.0f, 0.0f, 0.0f), math::quaternion(0, math::vector_3d(1.0f, 0.0f, 0.0f)),
-      math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+      math::vector_3d(-13.0f, -14.5f, 4.0f), math::quaternion(0, math::vector_3d(1.0f, 0.0f, 0.0f)),
+      math::vector_3d(1, 0, 0), math::quaternion(0, 0, 0, 0)
+    )
+  );
+  node_light2 = scene_graph->set_child(
+    *node_field,
+    gl::model(
+      { gl::mesh{ gl::light } },
+      math::vector_3d(0, 0, 0),
+      math::vector_3d(-13.0f, 14.5f, 4.0f), math::quaternion(0, math::vector_3d(1.0f, 0.0f, 0.0f)),
+      math::vector_3d(1, 0, 0), math::quaternion(0, 0, 0, 0)
+    )
+  );
+  node_light3 = scene_graph->set_child(
+    *node_field,
+    gl::model(
+      { gl::mesh{ gl::light } },
+      math::vector_3d(0, 0, 0),
+      math::vector_3d(13.0f, -14.5f, 4.0f), math::quaternion(0, math::vector_3d(1.0f, 0.0f, 0.0f)),
+      math::vector_3d(1, 0, 0), math::quaternion(0, 0, 0, 0)
+    )
+  );
+  node_light4 = scene_graph->set_child(
+    *node_field,
+    gl::model(
+      { gl::mesh{ gl::light } },
+      math::vector_3d(0, 0, 0),
+      math::vector_3d(13.0f, 14.5f, 4.0f), math::quaternion(0, math::vector_3d(1.0f, 0.0f, 0.0f)),
+      math::vector_3d(1, 0, 0), math::quaternion(0, 0, 0, 0)
     )
   );
   ball_obstacles = std::vector<std::tuple<gl::node, object_property>>();
@@ -531,13 +682,21 @@ int main(int argc, char **argv) {
       math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
     )
   );
-
+  node_light = scene_graph->set_child(
+    *node_ball,
+    gl::model(
+      { gl::mesh{ gl::light } },
+      math::vector_3d(0, 0, 0),
+      math::vector_3d(0.0f, 0.0f, 1.0f), math::quaternion(0, math::vector_3d(1.0f, 0.0f, 0.0f)),
+      math::vector_3d(0, 1, 0), math::quaternion(0, 0, 0, 0)
+    )
+  );
   left_ship_obstacle = scene_graph->set_child(
     *node_field,
     gl::model(
       *wall,
-      math::vector_3d(0.8f, 29.0f, 1.25f),
-      math::vector_3d(-13.0f, 0.0f, 1.25f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
+      math::vector_3d(0.8f, 29.0f, 2.00f),
+      math::vector_3d(-13.0f, 0.0f, 1.00f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
       math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
     )
   );
@@ -546,8 +705,8 @@ int main(int argc, char **argv) {
     *node_field,
     gl::model(
       *wall,
-      math::vector_3d(0.8f, 29.0f, 1.25f),
-      math::vector_3d(13.0f, 0.0f, 1.25f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
+      math::vector_3d(0.8f, 29.0f, 2.00f),
+      math::vector_3d(13.0f, 0.0f, 1.00f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
       math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
     )
   );
@@ -556,8 +715,8 @@ int main(int argc, char **argv) {
     *node_field,
     gl::model(
       *wall,
-      math::vector_3d(26.0f, 0.8f, 1.25f),
-      math::vector_3d(0.0f, 14.5f, 1.25f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
+      math::vector_3d(26.0f, 0.8f, 2.00f),
+      math::vector_3d(0.0f, 14.5f, 1.00f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
       math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
     )
   );
@@ -565,13 +724,19 @@ int main(int argc, char **argv) {
   auto down_obstacle = scene_graph->set_child(
     *node_field,
     gl::model(
-      *wall,
-      math::vector_3d(26.0f, 1.0f, 1.25f),
-      math::vector_3d(0.0f, -15.0f, 1.25f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
+      *laser,
+      math::vector_3d(26.0f, 1.0f, 2.00f),
+      math::vector_3d(0.0f, -15.0f, 1.00f), math::quaternion(0, math::vector_3d(0.0f, 1.0f, 0.0f)),
       math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
     )
   );
   scene_graph->nodes[down_obstacle->id].value().scene_info[0].type = gl::invisible;
+  scene_graph->nodes[down_obstacle->id].value().scene_info[1].type = gl::invisible;
+  scene_graph->nodes[down_obstacle->id].value().scene_info[2].type = gl::invisible;
+  scene_graph->nodes[down_obstacle->id].value().scene_info[3].type = gl::invisible;
+  scene_graph->nodes[down_obstacle->id].value().scene_info[4].type = gl::invisible;
+  scene_graph->nodes[down_obstacle->id].value().scene_info[5].type = gl::invisible;
+
   ball_obstacles.push_back(std::tuple(*down_obstacle, corrosive));
   scene_graph->set_child(
     *node_field,
@@ -623,6 +788,29 @@ int main(int argc, char **argv) {
     );
   }
 
+  //for (auto i = 0u; i < 10u; i++) {
+  //  auto node_star = scene_graph->set_root(
+  //    gl::model(
+  //      *star,
+  //      math::vector_3d(0.5f, 0.5f, 0.5f),
+  //      math::vector_3d((rand() % 80) - 40.0f, (rand() % 80) - 40.0f, -20.0f), math::quaternion(rand() % 360, math::vector_3d(0.0f, 1.0f, 0.0f)),
+  //      math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+  //    )
+  //  );
+  //  scene_graph->nodes[node_star->id].value().scene_info[0].type = gl::billboard;
+  //}
+  //for (auto i = 0u; i < 10u; i++) {
+  //  auto node_star = scene_graph->set_root(
+  //    gl::model(
+  //      *star,
+  //      math::vector_3d(0.5f, 0.5f, 0.5f),
+  //      math::vector_3d((rand() % 160) - 80.0f,  50.0f, (rand() % 160) - 80.0f), math::quaternion(rand() % 360, math::vector_3d(0.0f, 1.0f, 0.0f)),
+  //      math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+  //    )
+  //  );
+  //  scene_graph->nodes[node_star->id].value().scene_info[0].type = gl::billboard;
+  //}
+
   cameras = new std::array<gl::camera, 3>{
     gl::camera{
       gl::view(
@@ -644,7 +832,7 @@ int main(int argc, char **argv) {
         gl::perspective_projection(
           width, height,
           90,
-          0.1f, 50.0f
+          0.1f, 100.0f
         )
     },
       gl::camera{
@@ -655,7 +843,7 @@ int main(int argc, char **argv) {
         gl::perspective_projection(
           width, height,
           90,
-          0.5f, 50.0f
+          0.5f, 100.0f
         )
       }
   };

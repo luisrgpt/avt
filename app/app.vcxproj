@@ -130,12 +130,15 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="share\particles.frag" />
+    <None Include="share\particles.geom" />
     <None Include="share\normal_fragment.glsl" />
     <None Include="share\normal_vertex.glsl" />
     <None Include="share\flat.frag" />
     <None Include="share\flat.vert" />
     <None Include="share\blinn_phong.frag" />
     <None Include="share\blinn_phong.vert" />
+    <None Include="share\particles.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp" />

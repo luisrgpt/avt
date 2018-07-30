@@ -16,7 +16,9 @@ namespace gl {
     light,
     billboard,
     plain,
-    regular
+    regular,
+    textured,
+    particles
   };
 
   struct mesh {

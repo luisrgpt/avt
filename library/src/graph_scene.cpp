@@ -59,6 +59,7 @@ graph<model>* bltz::load(std::string filename)
   unsigned p = 0;
   math::vector_3d t = math::vector_3d::kZero;
   math::quaternion r = math::quaternion::kZero;
+  math::vector_3d tt = math::vector_3d::kZero;
   math::vector_3d s = math::vector_3d::kZero;
   mesh_type mt = invisible;
   vertex_type v = v_none;
@@ -114,6 +115,13 @@ graph<model>* bltz::load(std::string filename)
         std::stof(tokens[1]),
         std::stof(tokens[2]),
         std::stof(tokens[3])
+      );
+    }
+    else if (prefix.compare("tt") == 0) {
+      tt = math::vector_3d(
+        std::stof(tokens[0]),
+        std::stof(tokens[1]),
+        std::stof(tokens[2])
       );
     }
     else if (prefix.compare("s") == 0) {
@@ -229,7 +237,7 @@ graph<model>* bltz::load(std::string filename)
 
       scene.push_back(
         mesh{
-          regular,
+          mt,
           v,
           f,
           fv,
@@ -257,7 +265,7 @@ graph<model>* bltz::load(std::string filename)
       scene_graph->set_child(
         node { p },
         model(
-          scene, s, t, r, math::vector_3d(0, 0, 0), math::quaternion(0, 0, 0, 0)
+          scene, s, t, r, tt, math::quaternion(0, 0, 0, 0)
         )
       );
       scene.clear();
@@ -278,6 +286,7 @@ void bltz::save(graph<model> scene_graph, std::string filename)
     file << "p " << scene_graph.edges[i].id << std::endl;
     file << "t " << node.object.position.x << " " << node.object.position.y << " " << node.object.position.z << std::endl;
     file << "r " << node.object.orientation.x << " " << node.object.orientation.y << " " << node.object.orientation.z << " " << node.object.orientation.w << std::endl;
+    file << "tt " << node.object.velocity.x << " " << node.object.velocity.y << " " << node.object.velocity.z << std::endl;
     file << "s " << node.scale[0][0] << " " << node.scale[1][1] << " " << node.scale[2][2] << std::endl;
     for (auto mesh : scene_graph.nodes[i].value().scene_info) {
       file << "mt " << mesh.type << std::endl;

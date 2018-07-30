@@ -7,6 +7,7 @@
 #include "importers.hpp"
 #include "shaders.hpp"
 #include "camera.hpp"
+#include "illumination.hpp"
 #include "graph_scene.hpp"
 
 /////////////////////////////////////////////////////////////////////// NAMESPACE
@@ -29,7 +30,10 @@ namespace gl {
   struct uniform_block {
     const unsigned id;
   };
-  typedef std::vector<math::vector_3d> illumination;
+  struct texture {
+    const unsigned id;
+  };
+  typedef std::vector<model> illumination;
 
   class engine {
   private:
@@ -56,6 +60,20 @@ namespace gl {
     int window_id;
 
     void set_blinn_phong(
+      unsigned,
+      mesh,
+      illumination,
+      directional_light,
+      std::vector<math::vector_4d>,
+      math::matrix_4d,  //projection
+      math::matrix_4d,  //view
+      math::matrix_4d,  //translation
+      math::matrix_4d,  //rotation
+      math::matrix_4d   //scalation
+    );
+
+    void set_particles(
+      unsigned,
       mesh,
       illumination,
       math::matrix_4d,  //projection
@@ -115,6 +133,8 @@ namespace gl {
     template<class vertex, class fragment>
     scene* load_scene(program, fs::obj, fs::mtl);
 
+    //texture* load_texture(program, std::string);
+
     void use(program);
     void bind(mesh);
 
@@ -122,9 +142,9 @@ namespace gl {
 
     void before_draw();
     void draw(mesh);
-    void draw(graph<model>, camera);
-    void draw(graph<model>, free_camera);
-    void draw(graph<model>, math::matrix_4d, math::matrix_4d);
+    void draw(graph<model>, camera, directional_light);
+    //void draw(graph<model>, free_camera);
+    //void draw(graph<model>, math::matrix_4d, math::matrix_4d);
     void after_draw();
 
     void unbind();
